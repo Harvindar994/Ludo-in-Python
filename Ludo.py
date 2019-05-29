@@ -61,6 +61,27 @@ def selecter(x, y, mouse_x, mouse_y, color=colors_rb.white):
 def drow_circule(x, y, redouis, color=colors_rb.light_black):
     pygame.draw.circle(Game_Window, color, [x, y], redouis)
 
+def verify_position():
+    global colors_rb
+    fp = open('position.txt', 'r')
+    data = ''
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_n:
+                    data = fp.readline()
+                    if data == '':
+                        return
+                    data = data[len(data)+1:len(data)]
+                    data = data.split(',')
+                    data = [int(e) for e in data]
+            if event.type == pygame.QUIT:
+                close_game()
+
+        Game_Window.blit(Game_background, [0, 0])
+        if data != '':
+            pygame.draw.rect(Game_Window, colors_rb.light_black, data)
+        pygame.display.update()
 
 def insert_location(file_name, location):
     fp = open(file_name, 'a')
@@ -132,7 +153,7 @@ while True:
             print("Mouse X : ", Mouse_x)
             print("Mouse Y : ", Mouse_y)
 
-    define_pos(Game_background)
+    verify_position()
     Game_Window.fill(colors_rb.white)
     Game_Window.blit(Game_background, [0, 0])
     pygame.draw.rect(Game_Window, colors_rb.light_gray, (0, 0, 690, 689), 1)
