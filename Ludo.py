@@ -38,6 +38,7 @@ pygame.display.set_caption('Ludo')
 
 # Image Loading
 Game_background = pygame.image.load('Media/Image/background.png')
+Ballast_img = [pygame.image.load('Media/Image/ballast/B1.png'), pygame.image.load('Media/Image/ballast/B2.png'), pygame.image.load('Media/Image/ballast/B3.png'), pygame.image.load('Media/Image/ballast/B4.png'), pygame.image.load('Media/Image/ballast/B5.png'), pygame.image.load('Media/Image/ballast/B6.png'), pygame.image.load('Media/Image/ballast/B7.png'), pygame.image.load('Media/Image/ballast/B8.png')]
 
 
 # Global variables.
@@ -72,15 +73,17 @@ def verify_position():
                     data = fp.readline()
                     if data == '':
                         return
-                    data = data[len(data)+1:len(data)]
+                    data = data[1:len(data)-2]
                     data = data.split(',')
+                    print(data)
                     data = [int(e) for e in data]
+                    x, y, x1, y1 = data
             if event.type == pygame.QUIT:
                 close_game()
 
         Game_Window.blit(Game_background, [0, 0])
         if data != '':
-            pygame.draw.rect(Game_Window, colors_rb.light_black, data)
+            pygame.draw.rect(Game_Window, colors_rb.light_black, [x, y, x1-x, y1-y])
         pygame.display.update()
 
 def insert_location(file_name, location):
@@ -141,9 +144,41 @@ def define_pos(image):
             drow_circule(Mouse_x, Mouse_y, 10)
         pygame.display.update()
 
+
+def do_bet_1(x, y):
+    value = 7
+    count = 0
+    while count <= value:
+        Game_Window.blit(Ballast_img[count], [x, y])
+        pygame.time.Clock().tick(30)
+        count += 1
+        yield count
+
+
+def do_bet():
+    global Game_Window
+    global Game_background
+    count = 0
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_b:
+                    count = 0
+        Game_Window.blit(Game_background, [0, 0])
+        if count < 8:
+            Game_Window.blit(Ballast_img[count], [25, 508])
+            pygame.time.Clock().tick(30)
+            count += 1
+        else:
+            Game_Window.blit(Ballast_img[0], [25, 508])
+
+        pygame.display.update()
+
 # Main menu Creation.
 
-
+flag = False
 while True:
     for event in pygame.event.get():
         Mouse_x, Mouse_y = pygame.mouse.get_pos()
@@ -152,9 +187,18 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             print("Mouse X : ", Mouse_x)
             print("Mouse Y : ", Mouse_y)
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_b:
+                bet_itr = do_bet_1(25, 508)
+                flag = True
 
-    verify_position()
     Game_Window.fill(colors_rb.white)
     Game_Window.blit(Game_background, [0, 0])
-    pygame.draw.rect(Game_Window, colors_rb.light_gray, (0, 0, 690, 689), 1)
+    if flag:
+        try:
+            next(bet_itr)
+        except:
+            flag = False
+    else:
+        Game_Window.blit(Ballast_img[0], [25, 508])
     pygame.display.update()
