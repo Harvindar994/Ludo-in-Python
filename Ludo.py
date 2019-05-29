@@ -93,7 +93,7 @@ def define_pos(image):
                 if event.key == pygame.K_r:
                     circle = False
                     rect = True
-                if event.key == pygame.K_s:
+                if event.key == pygame.K_s and position != '':
                     insert_location(file_name, '\n'+position)
                     position = ''
 
@@ -101,13 +101,13 @@ def define_pos(image):
                 pygame.quit()
                 exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                x, y = pygame.mouse.get_pos()
                 if flag:
                     print("Mouse X : ", Mouse_x)
                     print("Mouse Y : ", Mouse_y)
                     position = '['+str(x)+','+str(y)+','+str(Mouse_x)+','+str(Mouse_y)+']'
                     flag = False
                 else:
+                    x, y = pygame.mouse.get_pos()
                     position = ''
                     flag = True
                     print("POS X : ", x)
