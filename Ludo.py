@@ -62,6 +62,12 @@ def drow_circule(x, y, redouis, color=colors_rb.light_black):
     pygame.draw.circle(Game_Window, color, [x, y], redouis)
 
 
+def insert_location(file_name, location):
+    fp = open(file_name, 'a')
+    fp.write(location)
+    fp.close()
+
+
 def define_pos(image):
     global colors_rb
     global event
@@ -70,7 +76,6 @@ def define_pos(image):
     rect = True
     circle = False
     file_name = input("Enter File Name : ")
-    file = open(file_name, 'a')
     position = ''
     x = 0
     y = 0
@@ -89,8 +94,9 @@ def define_pos(image):
                     circle = False
                     rect = True
                 if event.key == pygame.K_s:
-                    file.write('\n'+position)
-                    
+                    insert_location(file_name, '\n'+position)
+                    position = ''
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit(0)
