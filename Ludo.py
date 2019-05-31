@@ -14,8 +14,62 @@ class Colors:
 
 # class for defining path and position of ballast.
 class Ballast:
-    def __int__(self, color):
-        pass
+    def __init__(self, color_type):
+        if color_type == 'green':
+            self.Bet_block = [815, 491, 910, 588]
+        elif color_type == 'yellow':
+            self.Bet_block = [10, 492, 106, 588]
+        elif color_type == 'red':
+            self.Bet_block = [9, 61, 105, 158]
+        elif color_type == 'blue':
+            self.Bet_block = [814, 62, 912, 158]
+        self.Bet_status = True
+        self.Bet_flag = False
+        self.Bet_itration = None
+        self.last_bet_number = None
+
+    @staticmethod
+    def collide(mouse_x, mouse_y, rect):
+        x, y, x1, y1 = rect
+        if (mouse_x > x) and (mouse_x < x1) and (mouse_y > y) and (mouse_y < y1):
+            return True
+        else:
+            return False
+
+    def bet_manage(self, events):
+        global Game_Window
+        if events.type == pygame.MOUSEBUTTONDOWN:
+            if events.button == 1:
+                mouse_x, mouse_y = events.pos
+                if self.collide(mouse_x, mouse_y, self.Bet_block) and self.Bet_status:
+                    self.Bet_status = True
+                    self.Bet_flag = True
+                    self.Bet_itration = self.bet_now()
+
+        if self.Bet_flag:
+            try:
+                next(self.Bet_itration)
+            except StopIteration:
+                self.Bet_flag = False
+        else:
+            Game_Window.blit(Ballast_img[0], [829, 506])
+
+    def bet_now(self):
+        global Game_Window
+        x, y, x1, y1 = self.Bet_block
+        center_point_x = int(x + ((x1 - x) / 2))
+        center_point_y = int(y + ((y1 - y) / 2))
+        value = 7
+        count = 0
+        while count <= value:
+            image = Ballast_img[count]
+            point_x = center_point_x - (image.get_width() / 2)
+            point_y = center_point_y - (image.get_height() / 2)
+            Game_Window.blit(image, [point_x, point_y])
+            pygame.time.Clock().tick(30)
+            count += 1
+            yield count
+        return
 
     def create_path(self):
         pass
@@ -38,7 +92,10 @@ pygame.display.set_caption('Ludo')
 
 # Image Loading
 Game_background = pygame.image.load('Media/Image/background.png')
-Ballast_img = [pygame.image.load('Media/Image/ballast/B1.png'), pygame.image.load('Media/Image/ballast/B2.png'), pygame.image.load('Media/Image/ballast/B3.png'), pygame.image.load('Media/Image/ballast/B4.png'), pygame.image.load('Media/Image/ballast/B5.png'), pygame.image.load('Media/Image/ballast/B6.png'), pygame.image.load('Media/Image/ballast/B7.png'), pygame.image.load('Media/Image/ballast/B8.png')]
+Ballast_img = [pygame.image.load('Media/Image/ballast/B1.png'), pygame.image.load('Media/Image/ballast/B2.png'),
+               pygame.image.load('Media/Image/ballast/B3.png'), pygame.image.load('Media/Image/ballast/B4.png'),
+               pygame.image.load('Media/Image/ballast/B5.png'), pygame.image.load('Media/Image/ballast/B6.png'),
+               pygame.image.load('Media/Image/ballast/B7.png'), pygame.image.load('Media/Image/ballast/B8.png')]
 
 
 # Global variables.
@@ -52,153 +109,21 @@ def close_game():
     pygame.quit()
     sys.exit()
 
-# Temp Function to define screen objects.
-
-
-def selecter(x, y, mouse_x, mouse_y, color=colors_rb.white):
-    pygame.draw.rect(Game_Window, color, [x, y, mouse_x-x, mouse_y-y], 1)
-
-
-def drow_circule(x, y, redouis, color=colors_rb.light_black):
-    pygame.draw.circle(Game_Window, color, [x, y], redouis)
-
-def verify_position():
-    global colors_rb
-    fp = open('position.txt', 'r')
-    data = ''
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_n:
-                    data = fp.readline()
-                    if data == '':
-                        return
-                    data = data[1:len(data)-2]
-                    data = data.split(',')
-                    print(data)
-                    data = [int(e) for e in data]
-                    x, y, x1, y1 = data
-            if event.type == pygame.QUIT:
-                close_game()
-
-        Game_Window.blit(Game_background, [0, 0])
-        if data != '':
-            pygame.draw.rect(Game_Window, colors_rb.light_black, [x, y, x1-x, y1-y])
-        pygame.display.update()
-
-def insert_location(file_name, location):
-    fp = open(file_name, 'a')
-    fp.write(location)
-    fp.close()
-
-
-def define_pos(image):
-    global colors_rb
-    global event
-    global Mouse_y, Mouse_x
-    flag = False
-    rect = True
-    circle = False
-    file_name = input("Enter File Name : ")
-    position = ''
-    x = 0
-    y = 0
-    Mouse_x = 0
-    Mouse_y = 0
-    while True:
-        for event in pygame.event.get():
-            Mouse_x, Mouse_y = pygame.mouse.get_pos()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    return
-                if event.key == pygame.K_c:
-                    circle = True
-                    rect = False
-                if event.key == pygame.K_r:
-                    circle = False
-                    rect = True
-                if event.key == pygame.K_s and position != '':
-                    insert_location(file_name, '\n'+position)
-                    position = ''
-
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit(0)
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if flag:
-                    print("Mouse X : ", Mouse_x)
-                    print("Mouse Y : ", Mouse_y)
-                    position = '['+str(x)+','+str(y)+','+str(Mouse_x)+','+str(Mouse_y)+']'
-                    flag = False
-                else:
-                    x, y = pygame.mouse.get_pos()
-                    position = ''
-                    flag = True
-                    print("POS X : ", x)
-                    print("POS Y : ", y)
-
-        Game_Window.blit(image, [0, 0])
-        if flag and rect:
-            selecter(x, y, Mouse_x, Mouse_y, colors_rb.light_black)
-        if flag and circle:
-            drow_circule(Mouse_x, Mouse_y, 10)
-        pygame.display.update()
-
-
-def do_bet_1(x, y):
-    value = 7
-    count = 0
-    while count <= value:
-        Game_Window.blit(Ballast_img[count], [x, y])
-        pygame.time.Clock().tick(30)
-        count += 1
-        yield count
-
-
-def do_bet():
-    global Game_Window
-    global Game_background
-    count = 0
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                close_game()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_b:
-                    count = 0
-        Game_Window.blit(Game_background, [0, 0])
-        if count < 8:
-            Game_Window.blit(Ballast_img[count], [25, 508])
-            pygame.time.Clock().tick(30)
-            count += 1
-        else:
-            Game_Window.blit(Ballast_img[0], [25, 508])
-
-        pygame.display.update()
 
 # Main menu Creation.
 
-flag = False
+b1 = Ballast('green')
+event_list = []
 while True:
     for event in pygame.event.get():
         Mouse_x, Mouse_y = pygame.mouse.get_pos()
         if event.type == pygame.QUIT:
             close_game()
         if event.type == pygame.MOUSEBUTTONDOWN:
+            print(event.button)
             print("Mouse X : ", Mouse_x)
             print("Mouse Y : ", Mouse_y)
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_b:
-                bet_itr = do_bet_1(25, 508)
-                flag = True
 
-    Game_Window.fill(colors_rb.white)
     Game_Window.blit(Game_background, [0, 0])
-    if flag:
-        try:
-            next(bet_itr)
-        except:
-            flag = False
-    else:
-        Game_Window.blit(Ballast_img[0], [25, 508])
+    b1.bet_manage(event)
     pygame.display.update()
