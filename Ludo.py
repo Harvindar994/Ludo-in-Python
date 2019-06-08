@@ -11,6 +11,8 @@ class Colors:
     orange = (252, 82, 59)
     light_black = (43, 43, 43)
     light_gray = (166, 166, 166)
+    light_green = (97, 227, 31)
+    light_blue = (0, 133, 255)
 
 
 # class for defining path and position of ballast.
@@ -137,9 +139,9 @@ class Ballast:
         self.Movers_pos_3 = 'home'
         self.Movers_pos_4 = 'home'
         self.color_type = color_type
-        self.Bet_status = True
-        self.Bet_flag = False
-        self.Bet_itration = None
+        self.bet_status = True
+        self.bet_flag = False
+        self.bet_itration = None
         self.last_bet_number = None
 
     @staticmethod
@@ -156,28 +158,28 @@ class Ballast:
             x, y, x1, y1 = self.Home_pos_1
             Game_Window.blit(self.Movers_ballast, [x, y])
         elif type(self.Movers_pos_1) == int:
-            x, y, x1, y1 = self.Path[self.Movers_pos_1 - 1]
+            x, y, x1, y1 = self.Path[self.Movers_pos_1]
             Game_Window.blit(self.Movers_ballast, [x, y])
 
         if type(self.Movers_pos_2) == str and self.Movers_pos_2 == home:
             x, y, x1, y1 = self.Home_pos_2
             Game_Window.blit(self.Movers_ballast, [x, y])
         elif type(self.Movers_pos_2) == int:
-            x, y, x1, y1 = self.Path[self.Movers_pos_2 - 1]
+            x, y, x1, y1 = self.Path[self.Movers_pos_2]
             Game_Window.blit(self.Movers_ballast, [x, y])
 
         if type(self.Movers_pos_3) == str and self.Movers_pos_3 == home:
             x, y, x1, y1 = self.Home_pos_3
             Game_Window.blit(self.Movers_ballast, [x, y])
         elif type(self.Movers_pos_3) == int:
-            x, y, x1, y1 = self.Path[self.Movers_pos_3 - 1]
+            x, y, x1, y1 = self.Path[self.Movers_pos_3]
             Game_Window.blit(self.Movers_ballast, [x, y])
 
         if type(self.Movers_pos_4) == str and self.Movers_pos_4 == home:
             x, y, x1, y1 = self.Home_pos_4
             Game_Window.blit(self.Movers_ballast, [x, y])
         elif type(self.Movers_pos_4) == int:
-            x, y, x1, y1 = self.Path[self.Movers_pos_4 - 1]
+            x, y, x1, y1 = self.Path[self.Movers_pos_4]
             Game_Window.blit(self.Movers_ballast, [x, y])
 
     @staticmethod
@@ -188,6 +190,34 @@ class Ballast:
         else:
             return False
 
+    def move_ballast(self, events, moves):
+        home = 'home'
+        if self.Movers_pos_4 == home and self.Movers_pos_3 == home and self.Movers_pos_2 == home\
+                and self.Movers_pos_1 == home and moves != 6:
+            return True
+        if events.type == pygame.MOUSEBUTTONDOWN:
+            if events.button == 1:
+                mouse_x, mouse_y = event.pos
+                if self.Movers_pos_1 != home and self.collide(mouse_x, mouse_y, self.Path[self.Movers_pos_1]):
+                    self.Movers_pos_1 += moves
+                elif self.Movers_pos_2 != home and self.collide(mouse_x, mouse_y, self.Path[self.Movers_pos_2]):
+                    self.Movers_pos_2 += moves
+                elif self.Movers_pos_3 != home and self.collide(mouse_x, mouse_y, self.Path[self.Movers_pos_3]):
+                    self.Movers_pos_3 += moves
+                elif self.Movers_pos_4 != home and self.collide(mouse_x, mouse_y, self.Path[self.Movers_pos_4]):
+                    self.Movers_pos_4 += moves
+                elif moves == 6:
+                    if self.collide(mouse_x, mouse_y, self.Home_pos_1) and self.Movers_pos_1 == home:
+                            self.Movers_pos_1 = 0
+                    elif self.collide(mouse_x, mouse_y, self.Home_pos_2) and self.Movers_pos_2 == home:
+                            self.Movers_pos_2 = 0
+                    elif self.collide(mouse_x, mouse_y, self.Home_pos_3) and self.Movers_pos_3 == home:
+                            self.Movers_pos_3 = 0
+                    elif self.collide(mouse_x, mouse_y, self.Home_pos_4) and self.Movers_pos_4 == home:
+                            self.Movers_pos_4 = 0
+                return True
+        return False
+
     def bet_manage(self, events):
         global Last_bet_number
         global Game_Window
@@ -195,16 +225,16 @@ class Ballast:
         if events.type == pygame.MOUSEBUTTONDOWN:
             if events.button == 1:
                 mouse_x, mouse_y = events.pos
-                if self.collide(mouse_x, mouse_y, self.Bet_block) and self.Bet_status:
-                    self.Bet_status = False
-                    self.Bet_flag = True
-                    self.Bet_itration = self.bet_now()
+                if self.collide(mouse_x, mouse_y, self.Bet_block) and self.bet_status:
+                    self.bet_status = False
+                    self.bet_flag = True
+                    self.bet_itration = self.bet_now()
 
-        if self.Bet_flag:
+        if self.bet_flag:
             try:
-                next(self.Bet_itration)
+                next(self.bet_itration)
             except StopIteration:
-                self.Bet_flag = False
+                self.bet_flag = False
                 Last_bet_number = random.randint(1, 6)
         else:
             Game_Window.blit(Ballast_number_img[Last_bet_number-1], [x+14, y+15])  # 14, 15
@@ -227,19 +257,46 @@ class Ballast:
             yield count
         return
 
-    def create_path(self):
-        pass
-
-    def move(self):
-        pass
-
-    def check_location(self):
-        pass
+# Defining class for buttons.
 
 
-class Elements:
-    def __int__(self):
-        pass
+class Button:
+    def __init__(self, surface, image, hover_img, x, y):
+        self.surface = surface
+        self.image = pygame.image.load(image)
+        self.hover_img = pygame.image.load(hover_img)
+        self.x = x
+        self.y = y
+        self.x1 = x+self.image.get_width()
+        self.y1 = y+self.image.get_height()
+
+    def put(self):
+        self.surface.blit(self.image, [self.x, self.y])
+
+    def collide(self, x, y):
+        if (x > self.x) and (x < self.x1) and (y > self.y) and (y < self.y1):
+            return True
+        else:
+            return False
+
+    def config(self, config_dict):
+        if type(config_dict) != dict:
+            return
+        if 'position' in config_dict:
+            pos = config_dict['position']
+            if type(pos) == list and len(pos) == 2:
+                self.x, self.y = pos
+            else:
+                return
+
+    def place(self):
+        global Mouse_x
+        global Mouse_y
+        Mouse_x, Mouse_y = pygame.mouse.get_pos()
+        if self.collide(Mouse_x, Mouse_y):
+            self.surface.blit(self.hover_img, [self.x, self.y])
+        else:
+            self.surface.blit(self.image, [self.x, self.y])
 
 
 # Creating Game screen.
@@ -260,6 +317,10 @@ Ballast_number_img = [pygame.image.load('Media/Image/ballast/BN1.png'),
                       pygame.image.load('Media/Image/ballast/BN5.png'),
                       pygame.image.load('Media/Image/ballast/BN6.png')]
 
+main_menu_img = pygame.image.load('Media/Image/menu_img/Menu.png')
+visit_on_website = Button(Game_Window, 'Media/Image/menu_img/Visit_button_black.png',
+                          'Media/Image/menu_img/Visit_button_green.png', 120, 595)
+
 # Global variables.
 Mouse_x = 0
 Mouse_y = 0
@@ -267,27 +328,248 @@ event = None
 colors_rb = Colors()
 Last_bet_number = 2
 
+# temp function to define positions
+
+
+def selecter(x, y, mouse_x, mouse_y, color=colors_rb.white):
+    pygame.draw.rect(Game_Window, color, [x, y, mouse_x-x, mouse_y-y], 1)
+
+
+def drow_circule(x, y, redouis, color=colors_rb.light_black):
+    pygame.draw.circle(Game_Window, color, [x, y], redouis)
+
+
+def verify_position():
+    global colors_rb
+    global event
+    fp = open('position.txt', 'r')
+    data = ''
+    x, y, x1, y1 = [0, 0, 0, 0]
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_n:
+                    data = fp.readline()
+                    if data == '':
+                        return
+                    data = data[1:len(data)-2]
+                    data = data.split(',')
+                    print(data)
+                    data = [int(e) for e in data]
+                    x, y, x1, y1 = data
+            if event.type == pygame.QUIT:
+                close_game()
+
+        Game_Window.blit(Game_background, [0, 0])
+        if data != '':
+            pygame.draw.rect(Game_Window, colors_rb.light_black, [x, y, x1-x, y1-y])
+        pygame.display.update()
+
+
+def insert_location(file_name, location):
+    fp = open(file_name, 'a')
+    fp.write(location)
+    fp.close()
+
+
+def define_pos(image):
+    global colors_rb
+    global event
+    global Mouse_y, Mouse_x
+    flag = False
+    rect = True
+    circle = False
+    file_name = input("Enter File Name : ")
+    position = ''
+    x = 0
+    y = 0
+    Mouse_x = 0
+    Mouse_y = 0
+    while True:
+        for event in pygame.event.get():
+            Mouse_x, Mouse_y = pygame.mouse.get_pos()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+                if event.key == pygame.K_c:
+                    circle = True
+                    rect = False
+                if event.key == pygame.K_r:
+                    circle = False
+                    rect = True
+                if event.key == pygame.K_s and position != '':
+                    insert_location(file_name, '\n'+position)
+                    position = ''
+
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit(0)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if flag:
+                    print("Mouse X : ", Mouse_x)
+                    print("Mouse Y : ", Mouse_y)
+                    position = '['+str(x)+','+str(y)+','+str(Mouse_x)+','+str(Mouse_y)+']'
+                    flag = False
+                else:
+                    x, y = pygame.mouse.get_pos()
+                    position = ''
+                    flag = True
+                    print("POS X : ", x)
+                    print("POS Y : ", y)
+
+        Game_Window.blit(image, [0, 0])
+        if flag and rect:
+            selecter(x, y, Mouse_x, Mouse_y, colors_rb.white)
+        if flag and circle:
+            drow_circule(Mouse_x, Mouse_y, 10)
+        pygame.display.update()
+
+
+def collide(mouse_x, mouse_y, rect):
+    x, y, x1, y1 = rect
+    if (mouse_x > x) and (mouse_x < x1) and (mouse_y > y) and (mouse_y < y1):
+        return True
+    else:
+        return False
+
 
 def close_game():
     pygame.quit()
     sys.exit()
 
 
-# Main menu Creation.
+def play_game(players=0):
+    global Mouse_x, Mouse_y
+    global event
+    player = [Ballast('yellow'), Ballast('blue'), Ballast('red')]
 
-b1 = Ballast('green')
+    total_player = len(player)+players
+    bet_turn = 0
+    while True:
+        for event in pygame.event.get():
+            Mouse_x, Mouse_y = pygame.mouse.get_pos()
+            if event.type == pygame.QUIT:
+                close_game()
+        Game_Window.blit(Game_background, [0, 0])
+        if bet_turn == 0:
+            if total_player >= 1:
+                player[0].bet_manage(event)
+                if not player[0].bet_status and not player[0].bet_flag:
+                    if player[0].move_ballast(event, Last_bet_number):
+                        if Last_bet_number != 6:
+                            bet_turn += 1
+                            player[0].bet_status = True
+                            if bet_turn > total_player-1:
+                                bet_turn = 0
+                        else:
+                            player[0].bet_status = True
+        if bet_turn == 1:
+            if total_player >= 2:
+                player[1].bet_manage(event)
+                if not player[1].bet_status and not player[1].bet_flag:
+                    if Last_bet_number != 6:
+                        bet_turn += 1
+                        player[1].bet_status = True
+                        if bet_turn > total_player-1:
+                            bet_turn = 0
+                    else:
+                        player[1].bet_status = True
+        if bet_turn == 2:
+            if total_player >= 3:
+                player[2].bet_manage(event)
+                if not player[2].bet_status and not player[2].bet_flag:
+                    if Last_bet_number != 6:
+                        bet_turn += 1
+                        player[2].bet_status = True
+                        if bet_turn > total_player-1:
+                            bet_turn = 0
+                    else:
+                        player[2].bet_status = True
 
-while True:
-    for event in pygame.event.get():
-        Mouse_x, Mouse_y = pygame.mouse.get_pos()
-        if event.type == pygame.QUIT:
-            close_game()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            print(event.button)
-            print("Mouse X : ", Mouse_x)
-            print("Mouse Y : ", Mouse_y)
+        if bet_turn == 3:
+            if total_player >= 4:
+                player[3].bet_manage(event)
+                if not player[3].bet_status and not player[3].bet_flag:
+                    if Last_bet_number != 6:
+                        bet_turn += 1
+                        player[3].bet_status = True
+                        if bet_turn > total_player-1:
+                            bet_turn = 0
+                    else:
+                        player[3].bet_status = True
 
-    Game_Window.blit(Game_background, [0, 0])
-    b1.bet_manage(event)
-    b1.print_movers_ballast()
-    pygame.display.update()
+        if total_player >= 1:
+            player[0].print_movers_ballast()
+        if total_player >= 2:
+            player[1].print_movers_ballast()
+        if total_player >= 3:
+            player[2].print_movers_ballast()
+        if total_player >= 4:
+            player[3].print_movers_ballast()
+        pygame.display.update()
+
+
+def main_menu():
+    global Game_Window
+    global Mouse_x, Mouse_y
+    global event
+    global main_menu_img
+    global visit_on_website
+    options_rect_positions = ([448, 135, 844, 233], [448, 272, 844, 370], [448, 409, 844, 507], [448, 545, 844, 643])
+    option_rect = 0
+    option_rect_color_flag = False
+    while True:
+        for event in pygame.event.get():
+            Mouse_x, Mouse_y = pygame.mouse.get_pos()
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_DOWN:
+                    if option_rect == 3:
+                        option_rect = 0
+                    else:
+                        option_rect += 1
+                if event.key == pygame.K_UP:
+                    if option_rect == 0:
+                        option_rect = 3
+                    else:
+                        option_rect -= 1
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
+                    option_rect_color_flag = True
+                if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+                    option_rect_color_flag = True
+                if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+                    option_rect_color_flag = True
+                if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+                    option_rect_color_flag = True
+            if event.type == pygame.MOUSEBUTTONUP:
+                option_rect_color_flag = False
+                if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
+                    play_game()
+                if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+                    pass
+                if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+                    pass
+                if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+                    pass
+
+        if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
+            option_rect = 0
+        if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+            option_rect = 1
+        if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+            option_rect = 2
+        if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+            option_rect = 3
+        Game_Window.blit(main_menu_img, [0, 0])
+        visit_on_website.place()
+        x, y, x1, y1 = options_rect_positions[option_rect]
+        if option_rect_color_flag:
+            pygame.draw.rect(Game_Window, colors_rb.light_blue, [x, y, x1 - x, y1 - y], 4)
+        else:
+            pygame.draw.rect(Game_Window, colors_rb.light_green, [x, y, x1-x, y1-y], 4)
+        pygame.display.update()
+
+
+play_game()
