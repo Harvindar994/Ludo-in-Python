@@ -152,7 +152,8 @@ class Ballast:
         self.bet_flag = False
         self.bet_itration = None
         self.last_bet_number = None
-        self.ballast_highlight_color = [167, 167, 167]
+        self.ballast_highlight_color = [0, 247, 238]
+        self.home_highlighter_color = [255, 255, 255]
 
     @staticmethod
     def get_med_position(rect):
@@ -182,7 +183,26 @@ class Ballast:
             x, y, x1, y1 = self.Path[self.Movers_pos_4]
             pygame.draw.rect(Game_Window, color, [x, y, x1 - x, y1 - y])
 
-
+    def get_position(self):
+        pos_list = []
+        home = 'home'
+        if self.Movers_pos_1 != home:
+            pos_list.append(self.Path[self.Movers_pos_1])
+        else:
+            pos_list.append(0)
+        if self.Movers_pos_2 != home:
+            pos_list.append(self.Path[self.Movers_pos_2])
+        else:
+            pos_list.append(0)
+        if self.Movers_pos_3 != home:
+            pos_list.append(self.Path[self.Movers_pos_3])
+        else:
+            pos_list.append(0)
+        if self.Movers_pos_4 != home:
+            pos_list.append(self.Path[self.Movers_pos_4])
+        else:
+            pos_list.append(0)
+        return pos_list
 
     def put_ballast(self, rect):
         global Game_Window
@@ -485,7 +505,7 @@ def close_game():
 def play_game(players=0):
     global Mouse_x, Mouse_y
     global event
-    player = [Ballast('green'), Ballast('red')]
+    player = [Ballast('green'), Ballast('yellow'), Ballast('red'), Ballast('blue')]
 
     total_player = len(player)+players
     bet_turn = 0
@@ -497,11 +517,34 @@ def play_game(players=0):
     move_ballast_4 = False
     home = 'home'
     ballast_highlighter_color_change = 1
+    home_highlighter_color_change = 1
     while True:
         for event in pygame.event.get():
             Mouse_x, Mouse_y = pygame.mouse.get_pos()
             if event.type == pygame.QUIT:
                 close_game()
+        Game_Window.fill((255, 255, 255))
+        x, y, x1, y1 = player[bet_turn].Home_border
+        try:
+            pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
+        except:
+            home_highlighter_color_change = 1
+            player[bet_turn].home_highlighter_color = [255, 255, 255]
+
+        if home_highlighter_color_change <= 84:
+            player[bet_turn].home_highlighter_color[0] -= 1
+            player[bet_turn].home_highlighter_color[1] -= 1
+            player[bet_turn].home_highlighter_color[2] -= 1
+            home_highlighter_color_change += 1
+        elif home_highlighter_color_change < 168:
+            player[bet_turn].home_highlighter_color[0] += 1
+            player[bet_turn].home_highlighter_color[1] += 1
+            player[bet_turn].home_highlighter_color[2] += 1
+            home_highlighter_color_change += 1
+        elif home_highlighter_color_change > 168:
+            home_highlighter_color_change = 1
+            player[bet_turn].home_highlighter_color = [255, 255, 255]
+
         Game_Window.blit(Game_background, [0, 0])
         if bet_turn == 0:
             if total_player >= 1:
@@ -535,6 +578,7 @@ def play_game(players=0):
                         and player[bet_turn].Movers_pos_2 == home and player[bet_turn].Movers_pos_1 == home and Last_bet_number != 6:
                     move_ballast = False
                     if Last_bet_number != 6:
+
                         player[bet_turn].bet_status = True
                         bet_turn += 1
                         if bet_turn > total_player - 1:
@@ -617,21 +661,79 @@ def play_game(players=0):
             else:
                 if move_ballast_1:
                     temp_last_bet_number -= 1
-                    pygame.time.Clock().tick(30)
+                    pygame.time.Clock().tick(10)
                     player[bet_turn].Movers_pos_1 += 1
                 elif move_ballast_2:
                     temp_last_bet_number -= 1
                     player[bet_turn].Movers_pos_2 += 1
-                    pygame.time.Clock().tick(30)
+                    pygame.time.Clock().tick(10)
                 elif move_ballast_3:
                     temp_last_bet_number -= 1
                     player[bet_turn].Movers_pos_3 += 1
-                    pygame.time.Clock().tick(30)
+                    pygame.time.Clock().tick(10)
                 elif move_ballast_4:
                     temp_last_bet_number -= 1
                     player[bet_turn].Movers_pos_4 += 1
-                    pygame.time.Clock().tick(30)
+                    pygame.time.Clock().tick(10)
                 if temp_last_bet_number == 0:
+                    count = 0
+                    for element in player:
+                        if count != bet_turn:
+                            b1, b2, b3, b4 = element.get_position()
+                            if move_ballast_1:
+                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                    element.Movers_pos_1 = 'home'
+                                    break
+                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                    element.Movers_pos_2 = 'home'
+                                    break
+                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                    element.Movers_pos_3 = 'home'
+                                    break
+                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                    element.Movers_pos_4 = 'home'
+                                    break
+                            elif move_ballast_2:
+                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                    element.Movers_pos_1 = 'home'
+                                    break
+                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                    element.Movers_pos_2 = 'home'
+                                    break
+                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                    element.Movers_pos_3 = 'home'
+                                    break
+                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                    element.Movers_pos_4 = 'home'
+                                    break
+                            elif move_ballast_3:
+                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                    element.Movers_pos_1 = 'home'
+                                    break
+                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                    element.Movers_pos_2 = 'home'
+                                    break
+                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                    element.Movers_pos_3 = 'home'
+                                    break
+                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                    element.Movers_pos_4 = 'home'
+                                    break
+                            elif move_ballast_4:
+                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                    element.Movers_pos_1 = 'home'
+                                    break
+                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                    element.Movers_pos_2 = 'home'
+                                    break
+                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                    element.Movers_pos_3 = 'home'
+                                    break
+                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                    element.Movers_pos_4 = 'home'
+                                    break
+                        count += 1
+
                     move_ballast = False
                     move_ballast_1 = False
                     move_ballast_2 = False
@@ -647,23 +749,22 @@ def play_game(players=0):
 
         if move_ballast and not move_ballast_1 and not move_ballast_2 and not move_ballast_3 and not move_ballast_4:
             player[bet_turn].ballast_highlight()
-            if ballast_highlighter_color_change <= 66:
-                player[bet_turn].ballast_highlight_color[0] += 5
-                player[bet_turn].ballast_highlight_color[1] += 5
-                player[bet_turn].ballast_highlight_color[2] += 5
-
-                ballast_highlighter_color_change += 5
-            elif ballast_highlighter_color_change <= 132:
-                player[bet_turn].ballast_highlight_color[0] -= 5
-                player[bet_turn].ballast_highlight_color[1] -= 5
-                player[bet_turn].ballast_highlight_color[2] -= 5
-                ballast_highlighter_color_change += 5
-            elif ballast_highlighter_color_change > 132:
+            if ballast_highlighter_color_change <= 240:
+                player[bet_turn].ballast_highlight_color[0] += 10
+                #player[bet_turn].ballast_highlight_color[1] += 5
+                #player[bet_turn].ballast_highlight_color[2] +=
+                ballast_highlighter_color_change += 10
+            elif ballast_highlighter_color_change <= 480:
+                player[bet_turn].ballast_highlight_color[0] -= 10
+                #player[bet_turn].ballast_highlight_color[1] -= 5
+                #player[bet_turn].ballast_highlight_color[2] -= 5
+                ballast_highlighter_color_change += 10
+            elif ballast_highlighter_color_change > 480:
                 ballast_highlighter_color_change = 1
-                player[bet_turn].ballast_highlight_color = [167, 167, 167]
+                player[bet_turn].ballast_highlight_color = [0, 247, 238]
         else:
             ballast_highlighter_color_change = 1
-            player[bet_turn].ballast_highlight_color = [167, 167, 167]
+            player[bet_turn].ballast_highlight_color = [0, 247, 238]
 
         if total_player >= 1:
             player[0].print_movers_ballast()
@@ -674,7 +775,6 @@ def play_game(players=0):
         if total_player >= 4:
             player[3].print_movers_ballast()
         player[bet_turn].print_movers_ballast()
-        player[bet_turn].home_highlight_rect()
         pygame.display.update()
 
 
