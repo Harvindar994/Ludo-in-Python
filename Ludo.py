@@ -153,7 +153,10 @@ class Ballast:
         self.bet_itration = None
         self.last_bet_number = None
         self.ballast_highlight_color = [0, 247, 238]
-        self.home_highlighter_color = [255, 255, 255]
+        self.home_highlighter_color = [0, 229, 255]
+        self.home_highlighter_counter = 1
+        self.stop_positions = ([714, 369, 759, 412], [483, 553, 526, 598], [393, 599, 437, 645], [208, 368, 254, 413],
+                               [161, 279, 207, 322], [394, 94, 437, 139], [484, 46, 527, 92], [667, 279, 712, 324])
 
     @staticmethod
     def get_med_position(rect):
@@ -315,7 +318,7 @@ class Ballast:
             point_x = center_point_x - (image.get_width() / 2)
             point_y = center_point_y - (image.get_height() / 2)
             Game_Window.blit(image, [point_x, point_y])
-            pygame.time.Clock().tick(50)
+            pygame.time.Clock().tick(70)
             count += 1
             random.randint(1, 6)
             yield count
@@ -517,7 +520,7 @@ def play_game(players=0):
     move_ballast_4 = False
     home = 'home'
     ballast_highlighter_color_change = 1
-    home_highlighter_color_change = 1
+    cut_flag = False
     while True:
         for event in pygame.event.get():
             Mouse_x, Mouse_y = pygame.mouse.get_pos()
@@ -525,25 +528,16 @@ def play_game(players=0):
                 close_game()
         Game_Window.fill((255, 255, 255))
         x, y, x1, y1 = player[bet_turn].Home_border
-        try:
-            pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
-        except:
-            home_highlighter_color_change = 1
-            player[bet_turn].home_highlighter_color = [255, 255, 255]
-
-        if home_highlighter_color_change <= 84:
-            player[bet_turn].home_highlighter_color[0] -= 1
-            player[bet_turn].home_highlighter_color[1] -= 1
-            player[bet_turn].home_highlighter_color[2] -= 1
-            home_highlighter_color_change += 1
-        elif home_highlighter_color_change < 168:
-            player[bet_turn].home_highlighter_color[0] += 1
-            player[bet_turn].home_highlighter_color[1] += 1
-            player[bet_turn].home_highlighter_color[2] += 1
-            home_highlighter_color_change += 1
-        elif home_highlighter_color_change > 168:
-            home_highlighter_color_change = 1
-            player[bet_turn].home_highlighter_color = [255, 255, 255]
+        pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
+        if player[bet_turn].home_highlighter_counter <= 200:
+            player[bet_turn].home_highlighter_color[0] += 20
+            player[bet_turn].home_highlighter_counter += 20
+        elif player[bet_turn].home_highlighter_counter <= 400:
+            player[bet_turn].home_highlighter_color[0] -= 20
+            player[bet_turn].home_highlighter_counter += 20
+        elif player[bet_turn].home_highlighter_counter > 400:
+            player[bet_turn].home_highlighter_counter = 1
+            player[bet_turn].home_highlighter_color = [0, 229, 255]
 
         Game_Window.blit(Game_background, [0, 0])
         if bet_turn == 0:
@@ -676,64 +670,89 @@ def play_game(players=0):
                     player[bet_turn].Movers_pos_4 += 1
                     pygame.time.Clock().tick(10)
                 if temp_last_bet_number == 0:
-                    count = 0
-                    for element in player:
-                        if count != bet_turn:
-                            b1, b2, b3, b4 = element.get_position()
-                            if move_ballast_1:
-                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                    element.Movers_pos_1 = 'home'
-                                    break
-                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                    element.Movers_pos_2 = 'home'
-                                    break
-                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                    element.Movers_pos_3 = 'home'
-                                    break
-                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                    element.Movers_pos_4 = 'home'
-                                    break
-                            elif move_ballast_2:
-                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                    element.Movers_pos_1 = 'home'
-                                    break
-                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                    element.Movers_pos_2 = 'home'
-                                    break
-                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                    element.Movers_pos_3 = 'home'
-                                    break
-                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                    element.Movers_pos_4 = 'home'
-                                    break
-                            elif move_ballast_3:
-                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                    element.Movers_pos_1 = 'home'
-                                    break
-                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                    element.Movers_pos_2 = 'home'
-                                    break
-                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                    element.Movers_pos_3 = 'home'
-                                    break
-                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                    element.Movers_pos_4 = 'home'
-                                    break
-                            elif move_ballast_4:
-                                if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                    element.Movers_pos_1 = 'home'
-                                    break
-                                elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                    element.Movers_pos_2 = 'home'
-                                    break
-                                elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                    element.Movers_pos_3 = 'home'
-                                    break
-                                elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                    element.Movers_pos_4 = 'home'
-                                    break
-                        count += 1
-
+                    if move_ballast_1:
+                        for element in player[bet_turn].stop_positions:
+                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                break
+                        else:
+                            cut_flag = True
+                    elif move_ballast_2:
+                        for element in player[bet_turn].stop_positions:
+                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                break
+                        else:
+                            cut_flag = True
+                    elif move_ballast_3:
+                        for element in player[bet_turn].stop_positions:
+                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                break
+                        else:
+                            cut_flag = True
+                    elif move_ballast_4:
+                        for element in player[bet_turn].stop_positions:
+                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                break
+                        else:
+                            cut_flag = True
+                    if cut_flag:
+                        count = 0
+                        for element in player:
+                            if count != bet_turn:
+                                b1, b2, b3, b4 = element.get_position()
+                                if move_ballast_1:
+                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                        element.Movers_pos_1 = 'home'
+                                        break
+                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                        element.Movers_pos_2 = 'home'
+                                        break
+                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                        element.Movers_pos_3 = 'home'
+                                        break
+                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                        element.Movers_pos_4 = 'home'
+                                        break
+                                elif move_ballast_2:
+                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                        element.Movers_pos_1 = 'home'
+                                        break
+                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                        element.Movers_pos_2 = 'home'
+                                        break
+                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                        element.Movers_pos_3 = 'home'
+                                        break
+                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                        element.Movers_pos_4 = 'home'
+                                        break
+                                elif move_ballast_3:
+                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                        element.Movers_pos_1 = 'home'
+                                        break
+                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                        element.Movers_pos_2 = 'home'
+                                        break
+                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                        element.Movers_pos_3 = 'home'
+                                        break
+                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                        element.Movers_pos_4 = 'home'
+                                        break
+                                elif move_ballast_4:
+                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                        element.Movers_pos_1 = 'home'
+                                        break
+                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                        element.Movers_pos_2 = 'home'
+                                        break
+                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                        element.Movers_pos_3 = 'home'
+                                        break
+                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                        element.Movers_pos_4 = 'home'
+                                        break
+                            count += 1
+                    cut_flag = False
                     move_ballast = False
                     move_ballast_1 = False
                     move_ballast_2 = False
