@@ -158,6 +158,28 @@ class Ballast:
         self.stop_positions = ([714, 369, 759, 412], [483, 553, 526, 598], [393, 599, 437, 645], [208, 368, 254, 413],
                                [161, 279, 207, 322], [394, 94, 437, 139], [484, 46, 527, 92], [667, 279, 712, 324])
 
+    def validate_moves(self, moves, mover_ballast):
+        if mover_ballast == 1:
+            if len(self.Path)-1 < self.Movers_pos_1 + moves:
+                return True
+            else:
+                return False
+        elif mover_ballast == 2:
+            if len(self.Path)-1 < self.Movers_pos_2 + moves:
+                return True
+            else:
+                return False
+        elif mover_ballast == 3:
+            if len(self.Path)-1 < self.Movers_pos_3 + moves:
+                return True
+            else:
+                return False
+        elif mover_ballast == 4:
+            if len(self.Path)-1 < self.Movers_pos_4 + moves:
+                return True
+            else:
+                return False
+
     @staticmethod
     def get_med_position(rect):
         x, y, x1, y1 = rect
@@ -207,7 +229,7 @@ class Ballast:
             pos_list.append(0)
         return pos_list
 
-    def put_ballast(self, rect):
+    def put_ballast(self, rect, players=None):
         global Game_Window
         x, y, x1, y1 = rect
         if y == 0:
@@ -218,6 +240,7 @@ class Ballast:
             c_y = (y+((y1-y)/2))-40
             c_x = (x+((x1-x)/2))-18
             Game_Window.blit(self.Movers_ballast, [c_x, c_y])
+
 
     def print_movers_ballast(self):
         global Game_Window
@@ -288,6 +311,7 @@ class Ballast:
     def bet_manage(self, events):
         global Last_bet_number
         global Game_Window
+        global Last_six_counter
         x, y, x1, y1 = self.Bet_block
         if events.type == pygame.MOUSEBUTTONDOWN:
             if events.button == 1:
@@ -303,6 +327,14 @@ class Ballast:
             except StopIteration:
                 self.bet_flag = False
                 Last_bet_number = random.randint(1, 6)
+                if Last_bet_number == 6:
+                    Last_six_counter += 1
+                    if Last_six_counter > 2:
+                        while Last_bet_number != 6:
+                            Last_bet_number = random.randint(1, 6)
+                        Last_six_counter = 0
+                else:
+                    Last_six_counter = 0
         else:
             Game_Window.blit(Ballast_number_img[Last_bet_number-1], [x+14, y+15])  # 14, 15
 
@@ -394,6 +426,7 @@ Mouse_y = 0
 event = None
 colors_rb = Colors()
 Last_bet_number = 2
+Last_six_counter = 0
 
 # temp function to define positions
 
@@ -508,6 +541,8 @@ def close_game():
 def play_game(players=0):
     global Mouse_x, Mouse_y
     global event
+    global Last_six_counter
+    global Last_bet_number
     player = [Ballast('green'), Ballast('yellow'), Ballast('red'), Ballast('blue')]
 
     total_player = len(player)+players
@@ -518,6 +553,8 @@ def play_game(players=0):
     move_ballast_2 = False
     move_ballast_3 = False
     move_ballast_4 = False
+    reverse_move = False
+    reverse_move_ballast = None
     home = 'home'
     ballast_highlighter_color_change = 1
     cut_flag = False
@@ -567,16 +604,16 @@ def play_game(players=0):
                     move_ballast = True
 
         if move_ballast:
-            if not move_ballast_1 and not move_ballast_2 and not move_ballast_3 and not move_ballast_4:
+            if not reverse_move and not move_ballast_1 and not move_ballast_2 and not move_ballast_3 and not move_ballast_4:
                 if player[bet_turn].Movers_pos_4 == home and player[bet_turn].Movers_pos_3 == home \
                         and player[bet_turn].Movers_pos_2 == home and player[bet_turn].Movers_pos_1 == home and Last_bet_number != 6:
                     move_ballast = False
                     if Last_bet_number != 6:
-
                         player[bet_turn].bet_status = True
                         bet_turn += 1
                         if bet_turn > total_player - 1:
                             bet_turn = 0
+                        Last_six_counter = 0
                     else:
                         player[bet_turn].bet_status = True
 
@@ -605,6 +642,7 @@ def play_game(players=0):
                                     bet_turn += 1
                                     if bet_turn > total_player - 1:
                                         bet_turn = 0
+                                    Last_six_counter = 0
                                 else:
                                     player[bet_turn].bet_status = True
                             elif player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Home_pos_2) \
@@ -620,6 +658,7 @@ def play_game(players=0):
                                     bet_turn += 1
                                     if bet_turn > total_player - 1:
                                         bet_turn = 0
+                                    Last_six_counter = 0
                                 else:
                                     player[bet_turn].bet_status = True
                             elif player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Home_pos_3) \
@@ -635,6 +674,7 @@ def play_game(players=0):
                                     bet_turn += 1
                                     if bet_turn > total_player - 1:
                                         bet_turn = 0
+                                    Last_six_counter = 0
                                 else:
                                     player[bet_turn].bet_status = True
                             elif player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Home_pos_4) \
@@ -650,121 +690,248 @@ def play_game(players=0):
                                     bet_turn += 1
                                     if bet_turn > total_player - 1:
                                         bet_turn = 0
+                                    Last_six_counter = 0
                                 else:
                                     player[bet_turn].bet_status = True
             else:
-                if move_ballast_1:
-                    temp_last_bet_number -= 1
-                    pygame.time.Clock().tick(10)
-                    player[bet_turn].Movers_pos_1 += 1
-                elif move_ballast_2:
-                    temp_last_bet_number -= 1
-                    player[bet_turn].Movers_pos_2 += 1
-                    pygame.time.Clock().tick(10)
-                elif move_ballast_3:
-                    temp_last_bet_number -= 1
-                    player[bet_turn].Movers_pos_3 += 1
-                    pygame.time.Clock().tick(10)
-                elif move_ballast_4:
-                    temp_last_bet_number -= 1
-                    player[bet_turn].Movers_pos_4 += 1
-                    pygame.time.Clock().tick(10)
-                if temp_last_bet_number == 0:
+                if reverse_move_ballast == None and not reverse_move and not cut_flag:
                     if move_ballast_1:
-                        for element in player[bet_turn].stop_positions:
-                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                break
-                        else:
-                            cut_flag = True
+                        temp_last_bet_number -= 1
+                        pygame.time.Clock().tick(10)
+                        player[bet_turn].Movers_pos_1 += 1
                     elif move_ballast_2:
-                        for element in player[bet_turn].stop_positions:
-                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                break
-                        else:
-                            cut_flag = True
+                        temp_last_bet_number -= 1
+                        player[bet_turn].Movers_pos_2 += 1
+                        pygame.time.Clock().tick(10)
                     elif move_ballast_3:
-                        for element in player[bet_turn].stop_positions:
-                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                break
-                        else:
-                            cut_flag = True
+                        temp_last_bet_number -= 1
+                        player[bet_turn].Movers_pos_3 += 1
+                        pygame.time.Clock().tick(10)
                     elif move_ballast_4:
-                        for element in player[bet_turn].stop_positions:
-                            if element == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                break
+                        temp_last_bet_number -= 1
+                        player[bet_turn].Movers_pos_4 += 1
+                        pygame.time.Clock().tick(10)
+
+                    if temp_last_bet_number == 0:
+                        if move_ballast_1:
+                            for element in player[bet_turn].stop_positions:
+                                if element == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                    break
+                            else:
+                                cut_flag = True
+                        elif move_ballast_2:
+                            for element in player[bet_turn].stop_positions:
+                                if element == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                    break
+                            else:
+                                cut_flag = True
+                        elif move_ballast_3:
+                            for element in player[bet_turn].stop_positions:
+                                if element == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                    break
+                            else:
+                                cut_flag = True
+                        elif move_ballast_4:
+                            for element in player[bet_turn].stop_positions:
+                                if element == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                    break
+                            else:
+                                cut_flag = True
+                        if cut_flag:
+                            count = 0
+                            for element in player:
+                                if count != bet_turn:
+                                    b1, b2, b3, b4 = element.get_position()
+                                    if move_ballast_1:
+                                        if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                            move_ballast_1 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_1 = True
+                                            #element.Movers_pos_1 = 'home'
+                                            break
+                                        elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                            move_ballast_1 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_2 = True
+                                            #element.Movers_pos_2 = 'home'
+                                            break
+                                        elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                            move_ballast_1 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_3 = True
+                                            #element.Movers_pos_3 = 'home'
+                                            break
+                                        elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
+                                            move_ballast_1 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_4 = True
+                                            #element.Movers_pos_4 = 'home'
+                                            break
+                                    elif move_ballast_2:
+                                        if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                            move_ballast_2 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_1 = True
+                                            #element.Movers_pos_1 = 'home'
+                                            break
+                                        elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                            move_ballast_2 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_2 = True
+                                            #element.Movers_pos_2 = 'home'
+                                            break
+                                        elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                            move_ballast_2 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_3 = True
+                                            #element.Movers_pos_3 = 'home'
+                                            break
+                                        elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
+                                            move_ballast_2 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_4 = True
+                                            #element.Movers_pos_4 = 'home'
+                                            break
+                                    elif move_ballast_3:
+                                        if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                            move_ballast_3 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_1 = True
+                                            #element.Movers_pos_1 = 'home'
+                                            break
+                                        elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                            move_ballast_3 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_2 = True
+                                            #element.Movers_pos_2 = 'home'
+                                            break
+                                        elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                            move_ballast_3 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_3 = True
+                                            #element.Movers_pos_3 = 'home'
+                                            break
+                                        elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
+                                            move_ballast_3 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_4 = True
+                                            #element.Movers_pos_4 = 'home'
+                                            break
+                                    elif move_ballast_4:
+                                        if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                            move_ballast_4 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_1 = True
+                                            #element.Movers_pos_1 = 'home'
+                                            break
+                                        elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                            move_ballast_4 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_2 = True
+                                            #element.Movers_pos_2 = 'home'
+                                            break
+                                        elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                            move_ballast_4 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_3 = True
+                                            #element.Movers_pos_3 = 'home'
+                                            break
+                                        elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
+                                            move_ballast_4 = False
+                                            reverse_move_ballast = element
+                                            reverse_move = True
+                                            move_ballast_4 = True
+                                            #element.Movers_pos_4 = 'home'
+                                            break
+                                count += 1
+                            else:
+                                reverse_move_ballast = None
+                                reverse_move = False
+                                cut_flag = False
+                                move_ballast = False
+                                move_ballast_1 = False
+                                move_ballast_2 = False
+                                move_ballast_3 = False
+                                move_ballast_4 = False
+                                if Last_bet_number != 6:
+                                    player[bet_turn].bet_status = True
+                                    bet_turn += 1
+                                    if bet_turn > total_player - 1:
+                                        bet_turn = 0
+                                    Last_six_counter = 0
+                                else:
+                                    player[bet_turn].bet_status = True
                         else:
-                            cut_flag = True
+                            reverse_move_ballast = None
+                            reverse_move = False
+                            cut_flag = False
+                            move_ballast = False
+                            move_ballast_1 = False
+                            move_ballast_2 = False
+                            move_ballast_3 = False
+                            move_ballast_4 = False
+                            if Last_bet_number != 6:
+                                player[bet_turn].bet_status = True
+                                bet_turn += 1
+                                if bet_turn > total_player - 1:
+                                    bet_turn = 0
+                                Last_six_counter = 0
+                            else:
+                                player[bet_turn].bet_status = True
+                else:
                     if cut_flag:
-                        count = 0
-                        for element in player:
-                            if count != bet_turn:
-                                b1, b2, b3, b4 = element.get_position()
-                                if move_ballast_1:
-                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                        element.Movers_pos_1 = 'home'
-                                        break
-                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                        element.Movers_pos_2 = 'home'
-                                        break
-                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                        element.Movers_pos_3 = 'home'
-                                        break
-                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
-                                        element.Movers_pos_4 = 'home'
-                                        break
-                                elif move_ballast_2:
-                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                        element.Movers_pos_1 = 'home'
-                                        break
-                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                        element.Movers_pos_2 = 'home'
-                                        break
-                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                        element.Movers_pos_3 = 'home'
-                                        break
-                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
-                                        element.Movers_pos_4 = 'home'
-                                        break
-                                elif move_ballast_3:
-                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                        element.Movers_pos_1 = 'home'
-                                        break
-                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                        element.Movers_pos_2 = 'home'
-                                        break
-                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                        element.Movers_pos_3 = 'home'
-                                        break
-                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
-                                        element.Movers_pos_4 = 'home'
-                                        break
-                                elif move_ballast_4:
-                                    if b1 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                        element.Movers_pos_1 = 'home'
-                                        break
-                                    elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                        element.Movers_pos_2 = 'home'
-                                        break
-                                    elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                        element.Movers_pos_3 = 'home'
-                                        break
-                                    elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
-                                        element.Movers_pos_4 = 'home'
-                                        break
-                            count += 1
-                    cut_flag = False
-                    move_ballast = False
-                    move_ballast_1 = False
-                    move_ballast_2 = False
-                    move_ballast_3 = False
-                    move_ballast_4 = False
-                    if Last_bet_number != 6:
-                        player[bet_turn].bet_status = True
-                        bet_turn += 1
-                        if bet_turn > total_player - 1:
-                            bet_turn = 0
+                        if move_ballast_1:
+                            if reverse_move_ballast.Movers_pos_1 != 0:
+                                reverse_move_ballast.Movers_pos_1 -= 1
+                            else:
+                                reverse_move_ballast.Movers_pos_1 = 'home'
+                                cut_flag = False
+                        elif move_ballast_2:
+                            if reverse_move_ballast.Movers_pos_2 != 0:
+                                reverse_move_ballast.Movers_pos_2 -= 1
+                            else:
+                                reverse_move_ballast.Movers_pos_2 = 'home'
+                                cut_flag = False
+                        elif move_ballast_3:
+                            if reverse_move_ballast.Movers_pos_3 != 0:
+                                reverse_move_ballast.Movers_pos_3 -= 1
+                            else:
+                                reverse_move_ballast.Movers_pos_3 = 'home'
+                                cut_flag = False
+                        elif move_ballast_4:
+                            if reverse_move_ballast.Movers_pos_4 != 0:
+                                reverse_move_ballast.Movers_pos_4 -= 1
+                            else:
+                                reverse_move_ballast.Movers_pos_4 = 'home'
+                                cut_flag = False
+                        pygame.time.Clock().tick(30)
                     else:
+                        reverse_move_ballast = None
+                        reverse_move = False
+                        cut_flag = False
+                        move_ballast = False
+                        move_ballast_1 = False
+                        move_ballast_2 = False
+                        move_ballast_3 = False
+                        move_ballast_4 = False
                         player[bet_turn].bet_status = True
+
+
 
         if move_ballast and not move_ballast_1 and not move_ballast_2 and not move_ballast_3 and not move_ballast_4:
             player[bet_turn].ballast_highlight()
@@ -794,6 +961,8 @@ def play_game(players=0):
         if total_player >= 4:
             player[3].print_movers_ballast()
         player[bet_turn].print_movers_ballast()
+        if cut_flag and reverse_move_ballast != None:
+            reverse_move_ballast.print_movers_ballast()
         pygame.display.update()
 
 
