@@ -19,9 +19,11 @@ class Colors:
 class Ballast:
     def __init__(self, color_type):
         if color_type == 'green':
-            self.Home_border = [530, 416, 801, 686]
+            self.Winner_name_pos = [559, 780, 668]
+            self.Home_border = [491, 315, 523, 377]
             self.color = [2, 160, 73]
             self.Bet_block = [815, 491, 910, 588]
+            self.win_box = [523, 315, 491, 377]
             self.Movers_ballast = pygame.image.load('Media/Image/Movers_ballast/Green.png')
             self.Home_pos_1 = [596, 482, 652, 536]
             self.Home_pos_2 = [685, 480, 743, 537]
@@ -50,9 +52,11 @@ class Ballast:
                          [574, 325, 619, 368], [528, 325, 573, 368])
 
         elif color_type == 'yellow':
+            self.Winner_name_pos = [142, 362, 668]
             self.color = [255, 222, 21]
             self.Home_border = [119, 415, 390, 687]
             self.Bet_block = [10, 492, 106, 588]
+            self.win_box = [429, 376, 491, 409]
             self.Movers_ballast = pygame.image.load('Media/Image/Movers_ballast/Yellow.png')
             self.Home_pos_1 = [181, 479, 239, 535]
             self.Home_pos_2 = [268, 479, 326, 535]
@@ -81,9 +85,11 @@ class Ballast:
                          [439, 459, 482, 504], [439, 413, 482, 458])
 
         elif color_type == 'red':
+            self.Winner_name_pos = [142, 362, 8]
             self.color = [235, 28, 34]
             self.Home_border = [118, 5, 390, 275]
             self.Bet_block = [9, 61, 105, 158]
+            self.win_box = [396, 319, 432, 375]
             self.Movers_ballast = pygame.image.load('Media/Image/Movers_ballast/Red.png')
             self.Home_pos_1 = [181, 68, 239, 123]
             self.Home_pos_2 = [271, 67, 328, 123]
@@ -112,9 +118,11 @@ class Ballast:
                          [302, 324, 347, 367], [348, 324, 393, 367])
 
         elif color_type == 'blue':
+            self.Winner_name_pos = [559, 780, 8]
             self.color = [33, 159, 235]
             self.Home_border = [531, 4, 801, 275]
             self.Bet_block = [814, 62, 912, 158]
+            self.win_box = [429, 282, 491, 314]
             self.Movers_ballast = pygame.image.load('Media/Image/Movers_ballast/Blue.png')
             self.Home_pos_1 = [594, 66, 652, 123]
             self.Home_pos_2 = [685, 68, 740, 122]
@@ -142,6 +150,7 @@ class Ballast:
                          [439, 0, 482, 45], [439, 46, 482, 92], [439, 94, 482, 139], [439, 140, 482, 186],
                          [439, 187, 482, 232], [439, 233, 482, 279])
 
+        self.Win_status = False
         self.Home_border_width = 25
         self.Movers_pos_1 = 'home'
         self.Movers_pos_2 = 'home'
@@ -158,27 +167,75 @@ class Ballast:
         self.stop_positions = ([714, 369, 759, 412], [483, 553, 526, 598], [393, 599, 437, 645], [208, 368, 254, 413],
                                [161, 279, 207, 322], [394, 94, 437, 139], [484, 46, 527, 92], [667, 279, 712, 324])
 
+    def is_stop_location(self, moves):
+        if len(self.Path)-1 >= moves:
+            for e in self.stop_positions:
+                if e == self.Path[moves]:
+                    return True
+            else:
+                return False
+        else:
+            return False
+
     def validate_moves(self, moves, mover_ballast):
+        home = 'home'
+        win = 'win'
         if mover_ballast == 1:
-            if len(self.Path)-1 < self.Movers_pos_1 + moves:
+            if moves == 6 and self.Movers_pos_1 == home:
                 return True
-            else:
-                return False
+            elif self.Movers_pos_1 != home and self.Movers_pos_1 != win and len(self.Path) >= self.Movers_pos_1 + moves:
+                if not self.is_stop_location(self.Movers_pos_1 + moves):
+                    if not((self.Movers_pos_1 + moves == self.Movers_pos_2)
+                           or (self.Movers_pos_1 + moves == self.Movers_pos_3)
+                           or (self.Movers_pos_1 + moves == self.Movers_pos_4)):
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
+            return False
         elif mover_ballast == 2:
-            if len(self.Path)-1 < self.Movers_pos_2 + moves:
+            if moves == 6 and self.Movers_pos_2 == home:
                 return True
-            else:
-                return False
+            elif self.Movers_pos_2 != home and self.Movers_pos_2 != win and len(self.Path) >= self.Movers_pos_2 + moves:
+                if not self.is_stop_location(self.Movers_pos_2 + moves):
+                    if not((self.Movers_pos_2 + moves == self.Movers_pos_1)
+                           or (self.Movers_pos_2 + moves == self.Movers_pos_3)
+                           or (self.Movers_pos_2 + moves == self.Movers_pos_4)):
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
+            return False
         elif mover_ballast == 3:
-            if len(self.Path)-1 < self.Movers_pos_3 + moves:
+            if moves == 6 and self.Movers_pos_3 == home:
                 return True
-            else:
-                return False
+            elif self.Movers_pos_3 != home and self.Movers_pos_3 != win and len(self.Path) >= self.Movers_pos_3 + moves:
+                if not self.is_stop_location(self.Movers_pos_3 + moves):
+                    if not ((self.Movers_pos_3 + moves == self.Movers_pos_1)
+                            or (self.Movers_pos_3 + moves == self.Movers_pos_2)
+                            or (self.Movers_pos_3 + moves == self.Movers_pos_4)):
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
+            return False
         elif mover_ballast == 4:
-            if len(self.Path)-1 < self.Movers_pos_4 + moves:
+            if moves == 6 and self.Movers_pos_4 == home:
                 return True
-            else:
-                return False
+            elif self.Movers_pos_4 != home and self.Movers_pos_4 != win and len(self.Path) >= self.Movers_pos_4 + moves:
+                if not self.is_stop_location(self.Movers_pos_4 + moves):
+                    if not ((self.Movers_pos_4 + moves == self.Movers_pos_1)
+                            or (self.Movers_pos_4 + moves == self.Movers_pos_3)
+                            or (self.Movers_pos_4 + moves == self.Movers_pos_2)):
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
+            return False
 
     @staticmethod
     def get_med_position(rect):
@@ -194,36 +251,38 @@ class Ballast:
 
     def ballast_highlight(self):
         global Game_Window
+        global Last_bet_number
         color = tuple(self.ballast_highlight_color)
-        if self.Movers_pos_1 != 'home':
+        if self.Movers_pos_1 != 'home' and self.validate_moves(Last_bet_number, 1):
             x, y, x1, y1 = self.Path[self.Movers_pos_1]
             pygame.draw.rect(Game_Window, color, [x, y, x1-x, y1-y])
-        if self.Movers_pos_2 != 'home':
+        if self.Movers_pos_2 != 'home' and self.validate_moves(Last_bet_number, 2):
             x, y, x1, y1 = self.Path[self.Movers_pos_2]
             pygame.draw.rect(Game_Window, color, [x, y, x1 - x, y1 - y])
-        if self.Movers_pos_3 != 'home':
+        if self.Movers_pos_3 != 'home' and self.validate_moves(Last_bet_number, 3):
             x, y, x1, y1 = self.Path[self.Movers_pos_3]
             pygame.draw.rect(Game_Window, color, [x, y, x1 - x, y1 - y])
-        if self.Movers_pos_4 != 'home':
+        if self.Movers_pos_4 != 'home' and self.validate_moves(Last_bet_number, 4):
             x, y, x1, y1 = self.Path[self.Movers_pos_4]
             pygame.draw.rect(Game_Window, color, [x, y, x1 - x, y1 - y])
 
     def get_position(self):
         pos_list = []
         home = 'home'
-        if self.Movers_pos_1 != home:
+        win = 'win'
+        if self.Movers_pos_1 != home and self.Movers_pos_1 != win:
             pos_list.append(self.Path[self.Movers_pos_1])
         else:
             pos_list.append(0)
-        if self.Movers_pos_2 != home:
+        if self.Movers_pos_2 != home and self.Movers_pos_2 != win:
             pos_list.append(self.Path[self.Movers_pos_2])
         else:
             pos_list.append(0)
-        if self.Movers_pos_3 != home:
+        if self.Movers_pos_3 != home and self.Movers_pos_3 != win:
             pos_list.append(self.Path[self.Movers_pos_3])
         else:
             pos_list.append(0)
-        if self.Movers_pos_4 != home:
+        if self.Movers_pos_4 != home and self.Movers_pos_4 != win:
             pos_list.append(self.Path[self.Movers_pos_4])
         else:
             pos_list.append(0)
@@ -245,23 +304,32 @@ class Ballast:
     def print_movers_ballast(self):
         global Game_Window
         home = 'home'
+        win = 'win'
         if type(self.Movers_pos_1) == str and self.Movers_pos_1 == home:
             self.put_ballast(self.Home_pos_1)
+        elif type(self.Movers_pos_1) == str and self.Movers_pos_1 == win:
+            self.put_ballast(self.win_box)
         elif type(self.Movers_pos_1) == int:
             self.put_ballast(self.Path[self.Movers_pos_1])
 
         if type(self.Movers_pos_2) == str and self.Movers_pos_2 == home:
             self.put_ballast(self.Home_pos_2)
+        elif type(self.Movers_pos_2) == str and self.Movers_pos_2 == win:
+            self.put_ballast(self.win_box)
         elif type(self.Movers_pos_2) == int:
             self.put_ballast(self.Path[self.Movers_pos_2])
 
         if type(self.Movers_pos_3) == str and self.Movers_pos_3 == home:
             self.put_ballast(self.Home_pos_3)
+        elif type(self.Movers_pos_3) == str and self.Movers_pos_3 == win:
+            self.put_ballast(self.win_box)
         elif type(self.Movers_pos_3) == int:
             self.put_ballast(self.Path[self.Movers_pos_3])
 
         if type(self.Movers_pos_4) == str and self.Movers_pos_4 == home:
             self.put_ballast(self.Home_pos_4)
+        elif type(self.Movers_pos_4) == str and self.Movers_pos_4 == win:
+            self.put_ballast(self.win_box)
         elif type(self.Movers_pos_4) == int:
             self.put_ballast(self.Path[self.Movers_pos_4])
 
@@ -329,7 +397,7 @@ class Ballast:
                 Last_bet_number = random.randint(1, 6)
                 if Last_bet_number == 6:
                     Last_six_counter += 1
-                    if Last_six_counter > 2:
+                    if Last_six_counter > 1:
                         while Last_bet_number != 6:
                             Last_bet_number = random.randint(1, 6)
                         Last_six_counter = 0
@@ -537,14 +605,30 @@ def close_game():
     pygame.quit()
     sys.exit()
 
+def define_player(player=0):
+    player = []
+    if player < 2:
+        return False
+    elif player == 2:
+        player = [Ballast('green'), Ballast('red')]
+        return player
+    elif player == 3:
+        player = [Ballast('green'), Ballast('yellow'), Ballast('red')]
+        return player
+    elif player == 4:
+        player = [Ballast('green'), Ballast('yellow'), Ballast('red'), Ballast('blue')]
+        return player
+    else:
+        return False
 
 def play_game(players=0):
     global Mouse_x, Mouse_y
     global event
     global Last_six_counter
     global Last_bet_number
-    player = [Ballast('green'), Ballast('yellow'), Ballast('red'), Ballast('blue')]
-
+    player = define_player()
+    if not player:
+        return False
     total_player = len(player)+players
     bet_turn = 0
     move_ballast = False
@@ -554,8 +638,10 @@ def play_game(players=0):
     move_ballast_3 = False
     move_ballast_4 = False
     reverse_move = False
+    win_flag = False
     reverse_move_ballast = None
     home = 'home'
+    win = 'win'
     ballast_highlighter_color_change = 1
     cut_flag = False
     while True:
@@ -577,6 +663,7 @@ def play_game(players=0):
             player[bet_turn].home_highlighter_color = [0, 229, 255]
 
         Game_Window.blit(Game_background, [0, 0])
+
         if bet_turn == 0:
             if total_player >= 1:
                 player[0].bet_manage(event)
@@ -616,18 +703,35 @@ def play_game(players=0):
                         Last_six_counter = 0
                     else:
                         player[bet_turn].bet_status = True
+                elif (player[bet_turn].Movers_pos_1 != home or player[bet_turn].Movers_pos_2 != home\
+                        or player[bet_turn].Movers_pos_3 != home or player[bet_turn].Movers_pos_4 != home):
+                    if not (player[bet_turn].validate_moves(Last_bet_number, 1) or\
+                            player[bet_turn].validate_moves(Last_bet_number, 2) or\
+                            player[bet_turn].validate_moves(Last_bet_number, 3) or\
+                            player[bet_turn].validate_moves(Last_bet_number, 4)):
+                        move_ballast = False
+                        player[bet_turn].bet_status = True
+                        bet_turn += 1
+                        if bet_turn > total_player - 1:
+                            bet_turn = 0
+                        Last_six_counter = 0
+
 
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         mouse_x, mouse_y = event.pos
-                        if player[bet_turn].Movers_pos_1 != home and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_1]):
-                            move_ballast_1 = True
-                        elif player[bet_turn].Movers_pos_2 != home and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_2]):
-                            move_ballast_2 = True
-                        elif player[bet_turn].Movers_pos_3 != home and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_3]):
-                            move_ballast_3 = True
-                        elif player[bet_turn].Movers_pos_4 != home and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_4]):
-                            move_ballast_4 = True
+                        if type(player[bet_turn].Movers_pos_1) != str and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_1]):
+                            if player[bet_turn].validate_moves(Last_bet_number, 1):
+                                move_ballast_1 = True
+                        elif type(player[bet_turn].Movers_pos_2) != str and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_2]):
+                            if player[bet_turn].validate_moves(Last_bet_number, 2):
+                                move_ballast_2 = True
+                        elif type(player[bet_turn].Movers_pos_3) != str and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_3]):
+                            if player[bet_turn].validate_moves(Last_bet_number, 3):
+                                move_ballast_3 = True
+                        elif type(player[bet_turn].Movers_pos_4) != str and player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Path[player[bet_turn].Movers_pos_4]):
+                            if player[bet_turn].validate_moves(Last_bet_number, 4):
+                                move_ballast_4 = True
                         elif Last_bet_number == 6:
                             if player[bet_turn].collide(mouse_x, mouse_y, player[bet_turn].Home_pos_1) \
                                     and player[bet_turn].Movers_pos_1 == home:
@@ -697,41 +801,53 @@ def play_game(players=0):
                 if reverse_move_ballast == None and not reverse_move and not cut_flag:
                     if move_ballast_1:
                         temp_last_bet_number -= 1
-                        pygame.time.Clock().tick(10)
                         player[bet_turn].Movers_pos_1 += 1
+                        if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_1:
+                            player[bet_turn].Movers_pos_1 = win
+                            win_flag = True
+                        pygame.time.Clock().tick(10)
                     elif move_ballast_2:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_2 += 1
+                        if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_2:
+                            player[bet_turn].Movers_pos_2 = win
+                            win_flag = True
                         pygame.time.Clock().tick(10)
                     elif move_ballast_3:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_3 += 1
+                        if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_3:
+                            player[bet_turn].Movers_pos_3 = win
+                            win_flag = True
                         pygame.time.Clock().tick(10)
                     elif move_ballast_4:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_4 += 1
+                        if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_4:
+                            player[bet_turn].Movers_pos_4 = win
+                            win_flag = True
                         pygame.time.Clock().tick(10)
 
                     if temp_last_bet_number == 0:
-                        if move_ballast_1:
+                        if move_ballast_1 and player[bet_turn].Movers_pos_1 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
                                     break
                             else:
                                 cut_flag = True
-                        elif move_ballast_2:
+                        elif move_ballast_2 and player[bet_turn].Movers_pos_2 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
                                     break
                             else:
                                 cut_flag = True
-                        elif move_ballast_3:
+                        elif move_ballast_3 and player[bet_turn].Movers_pos_3 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
                                     break
                             else:
                                 cut_flag = True
-                        elif move_ballast_4:
+                        elif move_ballast_4 and player[bet_turn].Movers_pos_4 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
                                     break
@@ -868,13 +984,14 @@ def play_game(players=0):
                                 move_ballast_2 = False
                                 move_ballast_3 = False
                                 move_ballast_4 = False
-                                if Last_bet_number != 6:
+                                if Last_bet_number != 6 and not win_flag:
                                     player[bet_turn].bet_status = True
                                     bet_turn += 1
                                     if bet_turn > total_player - 1:
                                         bet_turn = 0
                                     Last_six_counter = 0
                                 else:
+                                    win_flag = False
                                     player[bet_turn].bet_status = True
                         else:
                             reverse_move_ballast = None
@@ -885,13 +1002,14 @@ def play_game(players=0):
                             move_ballast_2 = False
                             move_ballast_3 = False
                             move_ballast_4 = False
-                            if Last_bet_number != 6:
+                            if Last_bet_number != 6 and not win_flag:
                                 player[bet_turn].bet_status = True
                                 bet_turn += 1
                                 if bet_turn > total_player - 1:
                                     bet_turn = 0
                                 Last_six_counter = 0
                             else:
+                                win_flag = False
                                 player[bet_turn].bet_status = True
                 else:
                     if cut_flag:
@@ -931,7 +1049,28 @@ def play_game(players=0):
                         move_ballast_4 = False
                         player[bet_turn].bet_status = True
 
+        for element in player:
+            if element.Win_status:
+                x, x1, y = element.Winner_name_pos
+                custom_out_text(Game_Window, 'You Win', x, x1, y, colors_rb.white, 18, 'Media/Font/Kollektif.ttf')
 
+        if player[bet_turn].Movers_pos_1 == win and player[bet_turn].Movers_pos_2 == win and \
+            player[bet_turn].Movers_pos_3 == win and player[bet_turn].Movers_pos_4 == win:
+            player[bet_turn].Win_status = True
+        while player[bet_turn].Win_status:
+            move_ballast_1 = False
+            move_ballast_2 = False
+            move_ballast_3 = False
+            move_ballast_4 = False
+            move_ballast = False
+            player[bet_turn].bet_status = True
+            bet_turn += 1
+            if bet_turn > total_player - 1:
+                bet_turn = 0
+            Last_six_counter = 0
+            if player[bet_turn].Movers_pos_1 == win and player[bet_turn].Movers_pos_2 == win and \
+                    player[bet_turn].Movers_pos_3 == win and player[bet_turn].Movers_pos_4 == win:
+                player[bet_turn].Win_status = True
 
         if move_ballast and not move_ballast_1 and not move_ballast_2 and not move_ballast_3 and not move_ballast_4:
             player[bet_turn].ballast_highlight()
@@ -963,6 +1102,9 @@ def play_game(players=0):
         player[bet_turn].print_movers_ballast()
         if cut_flag and reverse_move_ballast != None:
             reverse_move_ballast.print_movers_ballast()
+        x, x1, y = player[bet_turn].Winner_name_pos
+        if not player[bet_turn].Win_status:
+            custom_out_text(Game_Window, 'Your Turn', x, x1, y, colors_rb.white, 18, 'Media/Font/Kollektif.ttf')
         pygame.display.update()
 
 
@@ -1028,6 +1170,30 @@ def main_menu():
             pygame.draw.rect(Game_Window, colors_rb.light_green, [x, y, x1-x, y1-y], 4)
         pygame.display.update()
 
+def out_text(text, size, x, y, color, font_style=None, bk_color=None):
+    global GameWindow
+    font = pygame.font.SysFont(font_style, size)
+    text_img = font.render(text, True, color, bk_color)
+    GameWindow.blit(text_img, [x, y])
+
+
+def out_text_file(surface, text, size, x, y, color, font_file, return_img = False, bk_color=None):
+    try:
+        font = pygame.font.Font(font_file, size)
+    except OSError:
+        font = pygame.font.SysFont(None, size)
+    text_img = font.render(text, True, color, bk_color)
+    if return_img:
+        return text_img
+    surface.blit(text_img, [x, y])
+
+
+def custom_out_text(surface, text, x, x1, y, color, size, f_file = "Media/Font/Kollektif.ttf"):
+    text_img = out_text_file(surface, text, size, 0, 0, color, f_file, True)
+    put_point_x = x + ((x1 - x) // 2)
+    put_point_x = put_point_x - (text_img.get_width() // 2)
+    surface.blit(text_img, [put_point_x, y])
+
 
 def ballast_resizer(self, resize_value, ballast):
     width = ballast.get_width()
@@ -1062,6 +1228,5 @@ def test_for_resizer():
         Game_Window.blit(Game_background, [0, 0])
         Game_Window.blit(temp_image, [604, 44])
         pygame.display.update()
-
 
 play_game()
