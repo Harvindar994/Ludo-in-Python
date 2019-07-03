@@ -484,6 +484,7 @@ Ballast_number_img = [pygame.image.load('Media/Image/ballast/BN1.png'),
                       pygame.image.load('Media/Image/ballast/BN5.png'),
                       pygame.image.load('Media/Image/ballast/BN6.png')]
 
+msg_box_img = pygame.image.load('Media/Image/MsgBox/MsgBox.png')
 main_menu_img = pygame.image.load('Media/Image/menu_img/Menu.png')
 visit_on_website = Button(Game_Window, 'Media/Image/menu_img/Visit_button_black.png',
                           'Media/Image/menu_img/Visit_button_green.png', 120, 595)
@@ -605,17 +606,17 @@ def close_game():
     pygame.quit()
     sys.exit()
 
-def define_player(player=0):
+def define_player(players=0):
     player = []
-    if player < 2:
+    if players < 2:
         return False
-    elif player == 2:
+    elif players == 2:
         player = [Ballast('green'), Ballast('red')]
         return player
-    elif player == 3:
+    elif players == 3:
         player = [Ballast('green'), Ballast('yellow'), Ballast('red')]
         return player
-    elif player == 4:
+    elif players == 4:
         player = [Ballast('green'), Ballast('yellow'), Ballast('red'), Ballast('blue')]
         return player
     else:
@@ -626,10 +627,10 @@ def play_game(players=0):
     global event
     global Last_six_counter
     global Last_bet_number
-    player = define_player()
+    player = define_player(players)
     if not player:
         return False
-    total_player = len(player)+players
+    total_player = len(player)
     bet_turn = 0
     move_ballast = False
     temp_last_bet_number = 0
@@ -1229,4 +1230,22 @@ def test_for_resizer():
         Game_Window.blit(temp_image, [604, 44])
         pygame.display.update()
 
-play_game()
+def msg_box(text, button=None):
+    global event
+    global msg_box_img
+    global Game_Window
+    global Game_background
+    bg_image = pygame.image.save(Game_Window, 'Temp.png')
+    bg_image = Game_background
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+
+        Game_Window.blit(bg_image, [0, 0])
+        Game_Window.blit(msg_box_img, [0, 0])
+        pygame.display.update()
+
+
+msg_box('text')
+play_game(3)
