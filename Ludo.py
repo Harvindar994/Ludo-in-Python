@@ -1206,7 +1206,7 @@ def main_menu():
                     if option_rect == 0:
                         play_game(3)
                     elif option_rect == 1:
-                        pass
+                        setting()
                     elif option_rect == 2:
                         pass
                     elif option_rect == 3:
@@ -1225,7 +1225,7 @@ def main_menu():
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
                     play_game(3)
                 if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
-                    pass
+                    setting()
                 if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
                     pass
                 if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
@@ -1633,10 +1633,7 @@ def setting():
     sperker_darkblue = ('Media/Image/Icon/speaker-darkblue.png')
     mute_blue = ('Media/Image/Icon/mute-blue.png')
     mute_darkblue = ('Media/Image/Icon/mute-darkblue.png')
-    music_y = 207
-    music_x = 313
-    sound_y = 287
-    sound_x = 313
+    back_button = Button(Game_Window, "Media/Image/Icon/back_blue.png","Media/Image/Icon/back_white.png", 20, 20, 'Back To Menu')
     music_button = Scroll_Button(Game_Window,314, 822, 218, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
     sound_buttton = Scroll_Button(Game_Window,314, 822, 299, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
     temp = Scroll_Button(Game_Window, 100, 850, 400, 8, speker_blue, sperker_darkblue, mute_blue,
@@ -1652,11 +1649,14 @@ def setting():
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    pass
+                    mouse_x, mouse_y = event.pos
+                    if back_button.collide(mouse_x, mouse_y):
+                        return
 
         Game_Window.blit(setting_background, [0, 0])
         LineEffact.show_effact()
         LineEffact_2.show_effact()
+        back_button.place()
         custom_out_text(Game_Window, 'Setting', 0, 920, 90, colors_rb.white, 28, 'Media/Font/adventpro-bold.ttf')
         out_text_file(Game_Window, 'Background Music', 24, 80, 207, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
         out_text_file(Game_Window, "Sound Effact's", 24, 80, 284, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
@@ -1671,4 +1671,4 @@ def setting():
         Game_Window.blit(mute_blue, [sound_x, sound_y])'''
         pygame.display.update()
 
-setting()
+main_menu()
