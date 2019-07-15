@@ -13,6 +13,7 @@ class Colors:
     light_gray = (166, 166, 166)
     light_green = (97, 227, 31)
     light_blue = (0, 133, 255)
+    light_orange = (255, 61, 0)
 
 
 # class for defining path and position of ballast.
@@ -428,8 +429,9 @@ class Ballast:
 
 
 class Button:
-    def __init__(self, surface, image, hover_img, x, y):
+    def __init__(self, surface, image, hover_img, x, y, caption_text = ''):
         self.surface = surface
+        self.caption = caption_text
         self.image = pygame.image.load(image)
         self.hover_img = pygame.image.load(hover_img)
         self.x = x
@@ -462,12 +464,37 @@ class Button:
         Mouse_x, Mouse_y = pygame.mouse.get_pos()
         if self.collide(Mouse_x, Mouse_y):
             self.surface.blit(self.hover_img, [self.x, self.y])
+            if len(self.caption) != 0:
+                caption(self.caption, self.x1+2, self.y-16)
         else:
             self.surface.blit(self.image, [self.x, self.y])
 
 
+class Line_effact:
+    def __init__(self, surface, image = 'Media/Image/Effact/line-blue.png', starting_point = -765):
+        self.surface = surface
+        self.image = pygame.image.load(image)
+        self.x = starting_point
+        self.y = 0
+        self.start_point_x = -800
+        self.end_point_x = 885
+        self.direction = 'right'
+
+    def show_effact(self):
+        if self.direction == 'right':
+            if self.x < self.end_point_x:
+                self.x += 4
+            else:
+                self.direction = 'left'
+        if self.direction == 'left':
+            if self.x > self.start_point_x:
+                self.x -= 4
+            else:
+                self.direction = 'right'
+        self.surface.blit(self.image, [self.x, self.y])
+
 # Creating Game screen.
-Game_Window = pygame.display.set_mode((920, 689))
+Game_Window = pygame.display.set_mode((920, 689), 0, 0)
 pygame.display.set_caption('Ludo')
 
 # Image Loading
@@ -488,6 +515,7 @@ msg_box_img = pygame.image.load('Media/Image/MsgBox/MsgBox.png')
 main_menu_img = pygame.image.load('Media/Image/menu_img/Menu.png')
 visit_on_website = Button(Game_Window, 'Media/Image/menu_img/Visit_button_black.png',
                           'Media/Image/menu_img/Visit_button_green.png', 120, 595)
+setting_background = pygame.image.load('Media/Image/setting/background.png')
 
 # Global variables.
 Mouse_x = 0
@@ -496,9 +524,33 @@ event = None
 colors_rb = Colors()
 Last_bet_number = 2
 Last_six_counter = 0
+LineEffact = Line_effact(Game_Window)
+LineEffact_2 = Line_effact(Game_Window, image='Media/Image/Effact/line-green.png',starting_point=875)
 
 # temp function to define positions
 
+
+def caption(text, x, y, window_width = 920, window_height = 690, bk_color = (255, 255, 255), border_color = (43, 43, 43), text_color = colors_rb.light_black):
+    global colors_rb
+    difrence_between_m_y = 0
+    difrence_between_m_x = 0
+    text_img = out_text_file(Game_Window, text, 12, 0, 0, text_color, "Media\Font\DroidSansMono.ttf", True)
+    rect_width = text_img.get_width()+6
+    rect_height = text_img.get_height()+4
+    rect_x = x+difrence_between_m_x
+    rect_y = y+difrence_between_m_y
+    if (rect_y+rect_height > window_height) and (rect_x+rect_width > window_width):
+        rect_x = x-rect_width
+        rect_y = y-rect_height
+    if rect_x+rect_width > window_width:
+        rect_x = rect_x-rect_width
+    if rect_y+rect_height > window_height:
+        rect_x = x
+        rect_y = y-rect_height
+
+    pygame.draw.rect(Game_Window, bk_color,[rect_x, rect_y, rect_width, rect_height])
+    pygame.draw.rect(Game_Window, border_color, [rect_x, rect_y, rect_width, rect_height], 1)
+    Game_Window.blit(text_img, [rect_x+3, rect_y+2]) #10, 5
 
 def selecter(x, y, mouse_x, mouse_y, color=colors_rb.light_black):
     pygame.draw.rect(Game_Window, color, [x, y, mouse_x-x, mouse_y-y], 1)
@@ -588,7 +640,7 @@ def define_pos(image):
 
         Game_Window.blit(image, [0, 0])
         if flag and rect:
-            selecter(x, y, Mouse_x, Mouse_y, colors_rb.light_black)
+            selecter(x, y, Mouse_x, Mouse_y, colors_rb.white)
         if flag and circle:
             drow_circule(Mouse_x, Mouse_y, 10)
         pygame.display.update()
@@ -649,7 +701,23 @@ def play_game(players=0):
         for event in pygame.event.get():
             Mouse_x, Mouse_y = pygame.mouse.get_pos()
             if event.type == pygame.QUIT:
-                close_game()
+                if msg_box('Are you sure,Do yo want to close,this game?', [{'name':'Yes', 'caption':'yes'},{'name':'No','caption':'No'}]) == 'Yes':
+                    close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if msg_box('Are you sure,Do yo want to go back,to main menu?',[{'name':'Yes', 'caption':'yes'},{'name':'No','caption':'No'}]) == 'Yes':
+                        return True
+        temp_count = 0
+        for e in player:
+            if e.Win_status:
+                temp_count += 1
+        if temp_count == (len(player)-1):
+            if msg_box('Game Completed',[{'name':'Replay', 'caption':'Replay Game'},
+                                         {'name':'Game Menu','caption':'Go To Main Menu'}]) == 'Replay':
+                return 'Replay'
+            else:
+                return 'Game Menu'
+
         Game_Window.fill((255, 255, 255))
         x, y, x1, y1 = player[bet_turn].Home_border
         pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
@@ -1134,6 +1202,15 @@ def main_menu():
                         option_rect = 3
                     else:
                         option_rect -= 1
+                if event.key == pygame.K_RETURN:
+                    if option_rect == 0:
+                        play_game(3)
+                    elif option_rect == 1:
+                        pass
+                    elif option_rect == 2:
+                        pass
+                    elif option_rect == 3:
+                        pass
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
                     option_rect_color_flag = True
@@ -1146,7 +1223,7 @@ def main_menu():
             if event.type == pygame.MOUSEBUTTONUP:
                 option_rect_color_flag = False
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
-                    play_game()
+                    play_game(3)
                 if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
                     pass
                 if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
@@ -1230,22 +1307,368 @@ def test_for_resizer():
         Game_Window.blit(temp_image, [604, 44])
         pygame.display.update()
 
-def msg_box(text, button=None):
+class Message:
+    def __init__(self, surface, rect, message='', text_size = 17, text_color = colors_rb.white, text_align = 'center'):
+        global Game_Window
+        self.message = message
+        self.message_area = rect
+        self.text_size = text_size
+        self.color = text_color
+        self.text_align = text_align
+        self.message_status = False
+        self.surface = surface
+        self.message_list_img = []
+        self.message_starting_y_point = 0
+        if type(rect) == list or type(rect) == tuple:
+            x, y, x1, y1 = rect
+        else:
+            return
+        if len(message) == 0:
+            return
+        self.center_x = int(((x1 - x)/2) + x)
+        message_list = message.split(',')
+        rect_width = x1 - x
+        rect_height = y1-y
+        max_width_line = 0
+        while True:
+            for e in message_list:
+                img = out_text_file(Game_Window, e,self.text_size, 0, 0, self.color, 'Media/Font/DroidSansMono.ttf', True)
+                if img.get_width() > max_width_line:
+                    max_width_line = img.get_width()
+                self.message_list_img.append(img)
+            if max_width_line > rect_width:
+                max_width_line = 0
+                self.text_size -= 1
+                text_size -= 1
+                self.message_list_img  = []
+                if self.text_size < 8:
+                    return
+                continue
+            total_height = self.message_list_img[0].get_height()+1
+            total_height = total_height*len(self.message_list_img)
+            if total_height > rect_height:
+                text_size -= 1
+                self.text_size -= 1
+                self.message_list_img = []
+                if self.text_size < 8:
+                    return
+                continue
+            else:
+                break
+        message_list_lenth = len(self.message_list_img)
+        center_y = y + ((y1 - y)/2)
+        if message_list_lenth % 2 == 0:
+            starting_pos = (center_y - 2)
+            half_msg = int((message_list_lenth) / 2)
+        else:
+            starting_pos = center_y - int(self.message_list_img[0].get_height()/2)
+            half_msg = int((message_list_lenth-1)/2)
+        line_height = self.message_list_img[0].get_height()
+        while half_msg != 0:
+            starting_pos -= line_height
+            half_msg -= 1
+        self.message_status = True
+        self.message_starting_y_point = starting_pos
+
+    def config(self, surface=None, rect=None, message=None, text_size = None, text_color = None):
+        if surface != None or rect != None or message != None or text_size != None or text_color != None:
+            self.__init__(surface if surface!= None else self.surface, rect if rect!=None else self.message_area,
+                          message if message!=None else self.message, text_size if text_size!=None else self.text_size,
+                          text_color if text_color!=None else self.color)
+            return True
+        else:
+            return False
+
+    def plase(self):
+        if self.text_align == 'left' or self.text_align == 'right':
+            x, y, x1, y1 = self.message_area
+            start_point_y = y+2
+        else:
+            start_point_y = self.message_starting_y_point
+        if self.message_status:
+            for e in self.message_list_img:
+                if self.text_align == 'center':
+                    x = self.center_x - (e.get_width()/2)
+                elif self.text_align == 'left':
+                    x, y, x1, y1 = self.message_area
+                    x += 2
+                elif self.text_align == 'right':
+                    x, y, x1, y1 = self.message_area
+                    x = x1 - (e.get_width()+2)
+                self.surface.blit(e, [x, start_point_y])
+                start_point_y += self.text_size+3
+
+class Text_button:
+    def __init__(self, surface, x, y, text, text_size, text_color, bk_color, border_color=None, hover_text_color=None, hover_bk_color=None, hover_border_color=None, caption=None):
+        self.Text = text
+        self.x = x
+        self.y = y
+        self.caption = caption
+        self.font_file = 'Media/Font/Gidole-Regular.otf'
+        self.Text_size = text_size
+        self.surface = surface
+        self.color = text_color
+        if hover_text_color != None:
+            self.hover_color = hover_text_color
+        else:
+            self.hover_color = text_color
+        self.bk_color = bk_color
+        if hover_bk_color != None:
+            self.hover_bk_color = hover_bk_color
+        else:
+            self.hover_bk_color = bk_color
+        self.border_color = border_color
+        if hover_border_color != None:
+            self.hover_border_color = hover_border_color
+        else:
+            self.hover_border_color = border_color
+        self.text_img = out_text_file(self.surface, self.Text ,self.Text_size, 0, 0, self.color, self.font_file, True)
+        if hover_text_color != None:
+            self.hover_text_img = out_text_file(self.surface, self.Text, self.Text_size, 0, 0, self.hover_color,
+                                          self.font_file, True)
+        else:
+            self.hover_text_img = self.text_img
+        self.button_width = self.text_img.get_width()+10
+        self.button_height = self.text_img.get_height()+4
+
+    def collide(self, x, y):
+        if (x >= self.x) and (x <= self.x+self.button_width) and (y >= self.y) and (y <= self.y+self.button_height):
+            return True
+        else:
+            return False
+
+    def config_pos(self, x, y):
+        self.x = x
+        self.y = y
+
+    def place(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if self.collide(mouse_x, mouse_y):
+            pygame.draw.rect(self.surface, self.hover_bk_color, [self.x, self.y, self.button_width, self.button_height])
+        else:
+            pygame.draw.rect(self.surface, self.bk_color, [self.x, self.y, self.button_width, self.button_height])
+        if self.collide(mouse_x, mouse_y) and self.hover_border_color != None:
+            pygame.draw.rect(self.surface, self.hover_border_color,
+                             [self.x, self.y, self.button_width, self.button_height], 1)
+        elif self.border_color != None:
+            pygame.draw.rect(self.surface, self.border_color,
+                             [self.x, self.y, self.button_width, self.button_height], 1)
+        if self.collide(mouse_x, mouse_y):
+            self.surface.blit(self.hover_text_img, [self.x + 5, self.y + 2])
+        else:
+            self.surface.blit(self.text_img, [self.x+5, self.y+2])
+        if self.caption != None and len(self.caption) != 0:
+            if self.collide(mouse_x, mouse_y):
+                caption(self.caption, self.x + self.button_width, self.y - self.button_height, border_color=colors_rb.light_orange)
+
+def msg_box(text, button=None, text_align='center'):
     global event
     global msg_box_img
     global Game_Window
     global Game_background
-    bg_image = pygame.image.save(Game_Window, 'Temp.png')
-    bg_image = Game_background
+    global Mouse_y, Mouse_x
+    value = lambda dict, key: dict[key] if key in dict else ''
+    pygame.image.save(Game_Window, 'Temp.png')
+    bg_image = pygame.image.load('Temp.png')
+    close_button = Button(Game_Window, 'Media/Image/Icon/orange_close.png', 'Media/Image/Icon/white_close.png', 612, 275, 'Close')
+    with_button_msg_area = [300, 272, 608, 400]
+    without_button_msg_area = [300, 272, 608, 423]
+    button_area = [300, 402, 608, 426]
+    Buttons = []
+    if button != None and type(button) == list:
+        msg = Message(Game_Window, with_button_msg_area, text, text_align=text_align)
+        button.reverse()
+        for e in button:
+            print(e)
+            if len(Buttons) == 0:
+                btn = Text_button(Game_Window, 0, 0, value(e, 'name'), 14, colors_rb.white, colors_rb.light_orange,
+                                  hover_text_color = colors_rb.light_black, hover_bk_color= colors_rb.white,
+                                  caption=value(e, 'caption'))
+                btn.config_pos(608-btn.button_width, 402)
+                Buttons.append(btn)
+            else:
+                btn = Text_button(Game_Window, 0, 0, value(e, 'name'), 14, colors_rb.white, colors_rb.light_orange,
+                                  hover_text_color=colors_rb.light_black, hover_bk_color=colors_rb.white,
+                                  caption=value(e, 'caption'))
+                btn_x = Buttons[len(Buttons)-1].x - (btn.button_width+10)
+                if btn_x < 300:
+                    break
+                btn.config_pos(btn_x, 402)
+                Buttons.append(btn)
+    else:
+        msg = Message(Game_Window, without_button_msg_area, text, text_align=text_align)
+    close_msg = False
+    show_msg = False
+    width = 0
+    height = 0
+    x = 460
+    y = 344
+    temp_msg_box = msg_box_img
+    close_msg_box = msg_box_img
+    return_text = None
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 close_game()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    Mouse_x, Mouse_y = event.pos
+                    if len(Buttons) != 0:
+                        for e in Buttons:
+                            if e.collide(Mouse_x, Mouse_y):
+                                return_text = e.Text
+                                close_msg = True
+                    if close_button.collide(Mouse_x, Mouse_y):
+                        close_msg = True
 
         Game_Window.blit(bg_image, [0, 0])
-        Game_Window.blit(msg_box_img, [0, 0])
+        if not show_msg and not close_msg:
+            width += 92
+            height += 69
+            x -= 46
+            y -= 34
+            temp_msg_box = pygame.transform.scale(msg_box_img, (width, height)).convert_alpha()
+            close_msg_box = temp_msg_box
+            if x <= 0 or y <= 0:
+                show_msg = True
+
+        if close_msg:
+            width -= 46
+            height -= 34
+            x += 23
+            y += 17
+            temp_msg_box = pygame.transform.scale(close_msg_box, (width, height)).convert_alpha()
+            if width <= 0 or height <= 0:
+                if return_text != None:
+                    return return_text
+                else:
+                    return True
+
+        if show_msg and not close_msg:
+            Game_Window.blit(msg_box_img, [0, 0])
+            close_button.place()
+            msg.plase()
+            if button != None:
+                for e in Buttons:
+                    e.place()
+        else:
+            Game_Window.blit(temp_msg_box, [x, y])
         pygame.display.update()
 
+class Scroll_Button:
+    def __init__(self,surface, x, x1, y, bar_thickness, pointer_img, pointer_hover_img = None, zero_value_pinter_img = None,
+                 zero_value_pointer_hover_img = None):
+        self.surface = surface
+        self.x = x
+        self.x1 = x1
+        self.y = y
+        self.thickness = bar_thickness
+        self.pointer_img = pointer_img
+        self.pointer_hover_img = pointer_hover_img if pointer_hover_img!=None else self.pointer_img
+        self.zero_value_pointer_img = zero_value_pinter_img if zero_value_pinter_img!=None else self.pointer_img
+        self.zero_value_pointer_hover_img = zero_value_pointer_hover_img if zero_value_pinter_img!=None and zero_value_pointer_hover_img!=None else self.zero_value_pointer_img if zero_value_pinter_img!=None else self.pointer_hover_img
+        self.pointer_img = pygame.image.load(self.pointer_img)
+        self.pointer_hover_img = pygame.image.load(self.pointer_hover_img)
+        self.zero_value_pointer_img = pygame.image.load(self.zero_value_pointer_img)
+        self.zero_value_pointer_hover_img = pygame.image.load(self.zero_value_pointer_hover_img)
+        self.value = float(0)
+        self.pointer_width = self.pointer_img.get_width()
+        self.pointer_height = self.pointer_img.get_height()
+        self.step_value = 100/(((self.x1-self.x)+2)-self.pointer_width)
+        self.pointer_x = self.x-1
+        self.pointer_y = (self.y + int(self.thickness/2))-int(self.pointer_height/2)
+        self.move_pointer = False
+        self.pointer_mouse_dis = 0
+        self.font_size = self.thickness+12
+        self.persentage_y = (self.y+(self.thickness/2))-(self.font_size/2)
 
-msg_box('text')
-play_game(3)
+    def place(self, event_list = None):
+        global colors_rb
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        if event_list != None:
+            for events in event_list:
+
+                if events.type == pygame.MOUSEBUTTONDOWN:
+                    if events.button == 1:
+                        mouse_x, mouse_y = events.pos
+                        if collide(mouse_x, mouse_y, [self.pointer_x, self.pointer_y, self.pointer_x+self.pointer_width, self.pointer_y+self.pointer_height]):
+                            self.pointer_mouse_dis = mouse_x - self.pointer_x
+                            self.move_pointer = True
+                if events.type == pygame.MOUSEBUTTONUP:
+                    if events.button == 1:
+                        self.move_pointer = False
+        if self.move_pointer:
+            if mouse_x-self.pointer_mouse_dis >= self.x and mouse_x-self.pointer_mouse_dis <= self.x1-self.pointer_width:
+                self.pointer_x = mouse_x-self.pointer_mouse_dis
+            if mouse_x-self.pointer_mouse_dis < self.x:
+                self.pointer_x = self.x-1
+            if mouse_x-self.pointer_mouse_dis > self.x1-self.pointer_width:
+                self.pointer_x = self.x1-self.pointer_width+1
+            self.value = (self.pointer_x - (self.x-1))*self.step_value
+            custom_out_text(Game_Window, str(int(self.value))+'%', self.x1+15, self.x1+45, self.persentage_y, colors_rb.white, self.font_size, 'Media/Font/Kollektif.ttf')
+
+        pygame.draw.rect(self.surface, colors_rb.white,
+                         [self.x, self.y, self.x1 - self.x, self.thickness])
+        pygame.draw.rect(self.surface, colors_rb.light_blue, [self.x, self.y, self.pointer_x-self.x+2, self.thickness])
+        if self.value <= 0:
+            if self.move_pointer or collide(mouse_x, mouse_y, [self.pointer_x, self.pointer_y, self.pointer_x+self.pointer_width, self.pointer_y+self.pointer_height]):
+                self.surface.blit(self.zero_value_pointer_hover_img, [self.pointer_x, self.pointer_y])
+            else:
+                self.surface.blit(self.zero_value_pointer_img, [self.pointer_x, self.pointer_y])
+        else:
+            if self.move_pointer or collide(mouse_x, mouse_y, [self.pointer_x, self.pointer_y, self.pointer_x+self.pointer_width, self.pointer_y+self.pointer_height]):
+                self.surface.blit(self.pointer_hover_img, [self.pointer_x, self.pointer_y])
+            else:
+                self.surface.blit(self.pointer_img, [self.pointer_x, self.pointer_y])
+
+
+def setting():
+    global LineEffact, LineEffact_3, LineEffact_2
+    global Mouse_x, Mouse_y
+    global setting_background
+    global event
+    global colors_rb
+    global Game_Window
+    speker_blue = ('Media/Image/Icon/speaker-blue.png')
+    sperker_darkblue = ('Media/Image/Icon/speaker-darkblue.png')
+    mute_blue = ('Media/Image/Icon/mute-blue.png')
+    mute_darkblue = ('Media/Image/Icon/mute-darkblue.png')
+    music_y = 207
+    music_x = 313
+    sound_y = 287
+    sound_x = 313
+    music_button = Scroll_Button(Game_Window,314, 822, 218, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
+    sound_buttton = Scroll_Button(Game_Window,314, 822, 299, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
+    temp = Scroll_Button(Game_Window, 100, 850, 400, 8, speker_blue, sperker_darkblue, mute_blue,
+                                  mute_darkblue)
+    event_list = []
+    while True:
+        for event in pygame.event.get():
+            event_list.append(event)
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return True
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    pass
+
+        Game_Window.blit(setting_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
+        custom_out_text(Game_Window, 'Setting', 0, 920, 90, colors_rb.white, 28, 'Media/Font/adventpro-bold.ttf')
+        out_text_file(Game_Window, 'Background Music', 24, 80, 207, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
+        out_text_file(Game_Window, "Sound Effact's", 24, 80, 284, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
+
+        temp.place(event_list)
+        music_button.place(event_list)
+        sound_buttton.place(event_list)
+        event_list = []
+        '''pygame.draw.rect(Game_Window, colors_rb.light_blue, [314, 219, 508, 8])
+        pygame.draw.rect(Game_Window, colors_rb.light_blue, [314, 299, 508, 8])
+        Game_Window.blit(mute_blue, [music_x, music_y])
+        Game_Window.blit(mute_blue, [sound_x, sound_y])'''
+        pygame.display.update()
+
+setting()
