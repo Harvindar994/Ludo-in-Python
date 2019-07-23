@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import clipboard
 import pymongo
 pygame.init()
 
@@ -21,7 +22,7 @@ class Ballast:
     def __init__(self, color_type):
         if color_type == 'green':
             self.Winner_name_pos = [559, 780, 668]
-            self.Home_border = [491, 315, 523, 377]
+            self.Home_border = [531, 415, 801, 687]
             self.color = [2, 160, 73]
             self.Bet_block = [815, 491, 910, 588]
             self.win_box = [523, 315, 491, 377]
@@ -172,6 +173,7 @@ class Ballast:
         if len(self.Path)-1 >= moves:
             for e in self.stop_positions:
                 if e == self.Path[moves]:
+                    return True
                     return True
             else:
                 return False
@@ -419,7 +421,7 @@ class Ballast:
             point_x = center_point_x - (image.get_width() / 2)
             point_y = center_point_y - (image.get_height() / 2)
             Game_Window.blit(image, [point_x, point_y])
-            pygame.time.Clock().tick(70)
+            pygame.time.Clock().tick(100)
             count += 1
             random.randint(1, 6)
             yield count
@@ -429,16 +431,25 @@ class Ballast:
 
 
 class Button:
-    def __init__(self, surface, image, hover_img, x, y, caption_text = ''):
+    def __init__(self, surface, image, hover_img, x, y, caption_text = '', press_effact = False, button_text = None, button_text_size = 28, button_text_color = (255, 255, 255)):
         self.surface = surface
         self.caption = caption_text
+        self.press_effact = press_effact
         self.image = pygame.image.load(image)
         self.hover_img = pygame.image.load(hover_img)
+        self.button_text = button_text
+        self.button_text_size = button_text_size
         self.x = x
         self.y = y
         self.x1 = x+self.image.get_width()
         self.y1 = y+self.image.get_height()
-
+        if press_effact:
+            img = pygame.transform.scale(self.hover_img, ((self.hover_img.get_width()-2), (self.hover_img.get_height()-2))).convert_alpha()
+            self.hover_img = img
+        if button_text != None and type(button_text) == str:
+            self.button_text_img = out_text_file(surface, button_text, button_text_size, 0, 0, button_text_color, 'Media/Font/Kollektif.ttf', True)
+            self.button_text_x = (self.x+(self.image.get_width()/2))-(self.button_text_img.get_width()/2)
+            self.button_text_y = (self.y+(self.image.get_height()/2))-(self.button_text_img.get_height()/2)
     def put(self):
         self.surface.blit(self.image, [self.x, self.y])
 
@@ -463,12 +474,16 @@ class Button:
         global Mouse_y
         Mouse_x, Mouse_y = pygame.mouse.get_pos()
         if self.collide(Mouse_x, Mouse_y):
-            self.surface.blit(self.hover_img, [self.x, self.y])
+            if self.press_effact:
+                self.surface.blit(self.hover_img, [self.x+1, self.y+1])
+            else:
+                self.surface.blit(self.hover_img, [self.x, self.y])
             if len(self.caption) != 0:
                 caption(self.caption, self.x1+2, self.y-16)
         else:
             self.surface.blit(self.image, [self.x, self.y])
-
+        if self.button_text != None and type(self.button_text) == str:
+            self.surface.blit(self.button_text_img, [self.button_text_x, self.button_text_y])
 
 class Line_effact:
     def __init__(self, surface, image = 'Media/Image/Effact/line-blue.png', starting_point = -765):
@@ -516,6 +531,9 @@ main_menu_img = pygame.image.load('Media/Image/menu_img/Menu.png')
 visit_on_website = Button(Game_Window, 'Media/Image/menu_img/Visit_button_black.png',
                           'Media/Image/menu_img/Visit_button_green.png', 120, 595)
 setting_background = pygame.image.load('Media/Image/setting/background.png')
+setting_background_logo = pygame.image.load('Media/Image/setting/background logo.png')
+Highlighter = pygame.image.load("Media/Image/Highlighter.png")
+main_background = pygame.image.load("Media/Image/main_background.png");
 
 # Global variables.
 Mouse_x = 0
@@ -526,6 +544,80 @@ Last_bet_number = 2
 Last_six_counter = 0
 LineEffact = Line_effact(Game_Window)
 LineEffact_2 = Line_effact(Game_Window, image='Media/Image/Effact/line-green.png',starting_point=875)
+Database_connection = pymongo.MongoClient('localhost',27017)
+Database = Database_connection['Ludo_Brightgoal']
+Collection = Database['Setting']
+back_button = Button(Game_Window, "Media/Image/Icon/back_blue.png", "Media/Image/Icon/back_white.png", 20, 20,
+                         'Back To Menu')
+facebook_button = Button(Game_Window, 'Media/Image/Icon/facebook.png', 'Media/Image/Icon/facebook.png', 339, 510, press_effact=True, caption_text='facebook.com/brightgoal.in.Education/')
+brightgoal_button = Button(Game_Window, 'Media/Image/Icon/brightgoal.png', 'Media/Image/Icon/brightgoal.png', 381, 510, press_effact=True, caption_text='brightgoal.in')
+youtube_button = Button(Game_Window, 'Media/Image/Icon/youtube.png', 'Media/Image/Icon/youtube.png', 423, 510, press_effact=True, caption_text='youtube.com/brightgoal')
+twitter_button = Button(Game_Window, 'Media/Image/Icon/twitter.png', 'Media/Image/Icon/twitter.png', 465, 510, press_effact=True, caption_text='twitter.com/brightgoal_in')
+insta_button = Button(Game_Window, 'Media/Image/Icon/insta.png', 'Media/Image/Icon/insta.png', 507, 510,
+                        press_effact=True, caption_text='instagram.com/brightgoal.in')
+whatsapp_button = Button(Game_Window, 'Media/Image/Icon/whatsapp.png', 'Media/Image/Icon/whatsapp.png', 549, 510,
+                        press_effact=True, caption_text='9140417112')
+more_product = Button(Game_Window, 'Media/Image/setting/more_product_black.png', 'Media/Image/setting/more_product_green.png', 375, 570, caption_text='https://www.instamojo.com/Brightgoal')
+
+#Global Setting Variable
+
+Sound_volume = 100
+Music_volume = 100
+
+# Setting related Function.
+
+def check_Setting():
+    global Database
+    global Collection
+    global Music_volume
+    global Sound_volume
+
+    collection_list = Database.list_collection_names()
+    if 'Setting' not in collection_list:
+        print('Setting not in Data Base')
+        change_collection('Setting')
+        try:
+            Collection.insert_one({'_id':12345, 'Music volume':100, 'Sound volume':100})
+        except:
+            pass
+
+    data = Collection.find_one({'_id' : 12345})
+    Music_volume = data['Music volume']
+    Sound_volume = data['Sound volume']
+
+def update_setting(collection_name, s_key, s_value, update_data = {}):
+    global Database
+    global Collection
+    global Music_volume
+    global Sound_volume
+    if type(collection_name) == str and len(collection_name) != 0:
+        change_collection(collection_name)
+    else:
+        return False
+    if type(update_data) ==  dict and len(update_data) != 0:
+        Collection.update_many({s_key:s_value}, {'$set':update_data})
+
+# DataBase releted function.
+
+def change_collection(collection_name):
+    global Collection
+    global Database
+    if type(collection_name) == str and len(collection_name)!=0:
+        Collection = Database[collection_name]
+        return False
+    return False
+
+def chnage_Database(database_name, collection_name):
+    global Collection
+    global Database_connection
+    global Database
+    if type(database_name) == str and type(collection_name) == str and len(database_name) != 0 \
+            and len(collection_name) != 0:
+        Database = Database_connection[database_name]
+        Collection = Database[Collection]
+        return True
+    return False
+
 
 # temp function to define positions
 
@@ -655,6 +747,8 @@ def collide(mouse_x, mouse_y, rect):
 
 
 def close_game():
+    global Database_connection
+    Database_connection.close()
     pygame.quit()
     sys.exit()
 
@@ -679,6 +773,10 @@ def play_game(players=0):
     global event
     global Last_six_counter
     global Last_bet_number
+    global Game_Window
+    global back_button
+    global main_background
+    global Highlighter, LineEffact_2, LineEffact
     player = define_player(players)
     if not player:
         return False
@@ -706,7 +804,14 @@ def play_game(players=0):
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     if msg_box('Are you sure,Do yo want to go back,to main menu?',[{'name':'Yes', 'caption':'yes'},{'name':'No','caption':'No'}]) == 'Yes':
-                        return True
+                        return 'Game Menu'
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                Mouse_x, Mouse_y = event.pos
+                if event.button == 1:
+                    if back_button.collide(Mouse_x, Mouse_y):
+                        if msg_box('Are you sure,Do yo want to go back,to main menu?',
+                                   [{'name': 'Yes', 'caption': 'yes'}, {'name': 'No', 'caption': 'No'}]) == 'Yes':
+                            return 'Game Menu'
         temp_count = 0
         for e in player:
             if e.Win_status:
@@ -718,10 +823,14 @@ def play_game(players=0):
             else:
                 return 'Game Menu'
 
-        Game_Window.fill((255, 255, 255))
+        #Game_Window.fill((255, 255, 255))
+        Game_Window.blit(main_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
         x, y, x1, y1 = player[bet_turn].Home_border
-        pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
-        if player[bet_turn].home_highlighter_counter <= 200:
+        #pygame.draw.rect(Game_Window, player[bet_turn].home_highlighter_color, [x, y, x1-x, y1-y])
+        Game_Window.blit(Highlighter, [x, y])
+        '''if player[bet_turn].home_highlighter_counter <= 200:
             player[bet_turn].home_highlighter_color[0] += 20
             player[bet_turn].home_highlighter_counter += 20
         elif player[bet_turn].home_highlighter_counter <= 400:
@@ -729,10 +838,10 @@ def play_game(players=0):
             player[bet_turn].home_highlighter_counter += 20
         elif player[bet_turn].home_highlighter_counter > 400:
             player[bet_turn].home_highlighter_counter = 1
-            player[bet_turn].home_highlighter_color = [0, 229, 255]
+            player[bet_turn].home_highlighter_color = [0, 229, 255]'''
 
         Game_Window.blit(Game_background, [0, 0])
-
+        back_button.place()
         if bet_turn == 0:
             if total_player >= 1:
                 player[0].bet_manage(event)
@@ -874,28 +983,28 @@ def play_game(players=0):
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_1:
                             player[bet_turn].Movers_pos_1 = win
                             win_flag = True
-                        pygame.time.Clock().tick(10)
+                        pygame.time.Clock().tick(18)
                     elif move_ballast_2:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_2 += 1
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_2:
                             player[bet_turn].Movers_pos_2 = win
                             win_flag = True
-                        pygame.time.Clock().tick(10)
+                        pygame.time.Clock().tick(18)
                     elif move_ballast_3:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_3 += 1
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_3:
                             player[bet_turn].Movers_pos_3 = win
                             win_flag = True
-                        pygame.time.Clock().tick(10)
+                        pygame.time.Clock().tick(18)
                     elif move_ballast_4:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_4 += 1
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_4:
                             player[bet_turn].Movers_pos_4 = win
                             win_flag = True
-                        pygame.time.Clock().tick(10)
+                        pygame.time.Clock().tick(18)
 
                     if temp_last_bet_number == 0:
                         if move_ballast_1 and player[bet_turn].Movers_pos_1 != win:
@@ -1176,6 +1285,108 @@ def play_game(players=0):
             custom_out_text(Game_Window, 'Your Turn', x, x1, y, colors_rb.white, 18, 'Media/Font/Kollektif.ttf')
         pygame.display.update()
 
+def choose_player():
+    global setting_background
+    global setting_background_logo
+    global back_button
+    global Game_Window
+    global LineEffact, LineEffact_2
+    global event
+    global brightgoal_button
+    global facebook_button, twitter_button, insta_button, whatsapp_button, youtube_button
+    global more_product
+    button_2 = Button(Game_Window, 'Media/Image/c_players/button.png', 'Media/Image/c_players/shadow_button.png',
+                      295, 250, button_text='2')
+    button_3 = Button(Game_Window, 'Media/Image/c_players/button.png', 'Media/Image/c_players/shadow_button.png',
+                      410, 250, button_text='3')
+    button_4 = Button(Game_Window, 'Media/Image/c_players/button.png', 'Media/Image/c_players/shadow_button.png',
+                      525, 250, button_text='4')
+    last_players = None
+    ads_txt = Message(Game_Window, [280, 400, 640, 500], 'If you want to download more Project,of python then click on,More Product', 22, font_file='Media/Font/adventpro-bold.ttf')
+    note_text = Message(Game_Window, [280, 120, 640, 220], 'How many Players wants to Play,Choose number of players', 22, font_file='Media/Font/adventpro-bold.ttf')
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_x, mouse_y = event.pos
+                    if more_product.collide(mouse_x, mouse_y):
+                        open_url('https://www.instamojo.com/Brightgoal')
+                    if facebook_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Facebook Page:,https://www.facebook.com/,brightgoal.in.Education/',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.facebook.com/brightgoal.in.Education/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.facebook.com/brightgoal.in.Education/')
+                    if brightgoal_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Website Link:,https://www.brightgoal.in/',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.brightgoal.in/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.brightgoal.in/')
+                    if insta_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Instagram link:,https://www.instagram.com,/brightgoal.in/',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.instagram.com/brightgoal.in/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.instagram.com/brightgoal.in/')
+                    if twitter_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Twitter Link:,https://twitter.com/brightgoal_in',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://twitter.com/brightgoal_in')
+                        elif re_value == 'Open in browser':
+                            open_url('https://twitter.com/brightgoal_in')
+                    if youtube_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Youtube Link:,https://youtube.com/brightgoal',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://youtube.com/brightgoal')
+                        elif re_value == 'Open in browser':
+                            open_url('https://youtube.com/brightgoal')
+                    if whatsapp_button.collide(mouse_x, mouse_y):
+                        if msg_box('WhatsApp Number,9140417112',
+                                   [{'name': 'Copy to clipboard'}]) == 'Copy to clipboard':
+                            clipboard.copy('9140417112')
+                    if back_button.collide(mouse_x, mouse_y):
+                        return
+                    if button_2.collide(mouse_x, mouse_y):
+                        last_players = 2
+                    if button_3.collide(mouse_x, mouse_y):
+                        last_players = 3
+                    if button_4.collide(mouse_x, mouse_y):
+                        last_players = 4
+                    if last_players != None:
+                        while True:
+                            return_value = play_game(last_players)
+                            if return_value == 'Game Menu':
+                                return True
+        Game_Window.blit(setting_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
+        Game_Window.blit(setting_background_logo, [0, 0])
+        custom_out_text(Game_Window, 'Players', 0, 920, 90, colors_rb.white, 28, 'Media/Font/adventpro-bold.ttf')
+        ads_txt.plase()
+        note_text.plase()
+        back_button.place()
+        button_2.place()
+        button_3.place()
+        button_4.place()
+        whatsapp_button.place()
+        insta_button.place()
+        twitter_button.place()
+        youtube_button.place()
+        brightgoal_button.place()
+        facebook_button.place()
+        more_product.place()
+        pygame.display.update()
 
 def main_menu():
     global Game_Window
@@ -1183,6 +1394,9 @@ def main_menu():
     global event
     global main_menu_img
     global visit_on_website
+    global setting_background
+    global LineEffact_2
+    global LineEffact
     options_rect_positions = ([448, 135, 844, 233], [448, 272, 844, 370], [448, 409, 844, 507], [448, 545, 844, 643])
     option_rect = 0
     option_rect_color_flag = False
@@ -1204,7 +1418,7 @@ def main_menu():
                         option_rect -= 1
                 if event.key == pygame.K_RETURN:
                     if option_rect == 0:
-                        play_game(3)
+                        choose_player()
                     elif option_rect == 1:
                         setting()
                     elif option_rect == 2:
@@ -1223,7 +1437,7 @@ def main_menu():
             if event.type == pygame.MOUSEBUTTONUP:
                 option_rect_color_flag = False
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
-                    play_game(3)
+                    choose_player()
                 if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
                     setting()
                 if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
@@ -1239,6 +1453,9 @@ def main_menu():
             option_rect = 2
         if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
             option_rect = 3
+        Game_Window.blit(setting_background, [0, 0])
+        LineEffact_2.show_effact()
+        LineEffact.show_effact()
         Game_Window.blit(main_menu_img, [0, 0])
         visit_on_website.place()
         x, y, x1, y1 = options_rect_positions[option_rect]
@@ -1308,7 +1525,7 @@ def test_for_resizer():
         pygame.display.update()
 
 class Message:
-    def __init__(self, surface, rect, message='', text_size = 17, text_color = colors_rb.white, text_align = 'center'):
+    def __init__(self, surface, rect, message='', text_size = 17, text_color = colors_rb.white, text_align = 'center', font_file = 'Media/Font/DroidSansMono.ttf'):
         global Game_Window
         self.message = message
         self.message_area = rect
@@ -1332,7 +1549,7 @@ class Message:
         max_width_line = 0
         while True:
             for e in message_list:
-                img = out_text_file(Game_Window, e,self.text_size, 0, 0, self.color, 'Media/Font/DroidSansMono.ttf', True)
+                img = out_text_file(Game_Window, e,self.text_size, 0, 0, self.color, font_file, True)
                 if img.get_width() > max_width_line:
                     max_width_line = img.get_width()
                 self.message_list_img.append(img)
@@ -1479,7 +1696,6 @@ def msg_box(text, button=None, text_align='center'):
         msg = Message(Game_Window, with_button_msg_area, text, text_align=text_align)
         button.reverse()
         for e in button:
-            print(e)
             if len(Buttons) == 0:
                 btn = Text_button(Game_Window, 0, 0, value(e, 'name'), 14, colors_rb.white, colors_rb.light_orange,
                                   hover_text_color = colors_rb.light_black, hover_bk_color= colors_rb.white,
@@ -1557,7 +1773,7 @@ def msg_box(text, button=None, text_align='center'):
 
 class Scroll_Button:
     def __init__(self,surface, x, x1, y, bar_thickness, pointer_img, pointer_hover_img = None, zero_value_pinter_img = None,
-                 zero_value_pointer_hover_img = None):
+                 zero_value_pointer_hover_img = None, defult_value = None):
         self.surface = surface
         self.x = x
         self.x1 = x1
@@ -1576,12 +1792,17 @@ class Scroll_Button:
         self.pointer_height = self.pointer_img.get_height()
         self.step_value = 100/(((self.x1-self.x)+2)-self.pointer_width)
         self.pointer_x = self.x-1
+        if defult_value != None:
+            self.pointer_x = self.pointer_x+int(defult_value/self.step_value)
+            self.value = defult_value
         self.pointer_y = (self.y + int(self.thickness/2))-int(self.pointer_height/2)
         self.move_pointer = False
         self.pointer_mouse_dis = 0
         self.font_size = self.thickness+12
         self.persentage_y = (self.y+(self.thickness/2))-(self.font_size/2)
-
+    def config_value(self, persentage):
+        self.pointer_x = (self.x-1) + (int(persentage / self.step_value))
+        self.value = persentage
     def place(self, event_list = None):
         global colors_rb
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -1621,6 +1842,19 @@ class Scroll_Button:
             else:
                 self.surface.blit(self.pointer_img, [self.pointer_x, self.pointer_y])
 
+def open_url(url):
+    import webbrowser
+    try:
+        webbrowser.get('chrome').open_new(url)
+    except:
+        try:
+            webbrowser.get('firefox').open_new_tab(url)
+        except:
+            try:
+                webbrowser.open(url, new=1)
+            except:
+                return False
+    return True
 
 def setting():
     global LineEffact, LineEffact_3, LineEffact_2
@@ -1629,15 +1863,34 @@ def setting():
     global event
     global colors_rb
     global Game_Window
+    global Music_volume
+    global Sound_volume
+    global setting_background_logo
+    global back_button
+    global brightgoal_button
+    global facebook_button, twitter_button, insta_button, whatsapp_button, youtube_button
+    global more_product
+    check_Setting()
     speker_blue = ('Media/Image/Icon/speaker-blue.png')
     sperker_darkblue = ('Media/Image/Icon/speaker-darkblue.png')
     mute_blue = ('Media/Image/Icon/mute-blue.png')
     mute_darkblue = ('Media/Image/Icon/mute-darkblue.png')
-    back_button = Button(Game_Window, "Media/Image/Icon/back_blue.png","Media/Image/Icon/back_white.png", 20, 20, 'Back To Menu')
-    music_button = Scroll_Button(Game_Window,314, 822, 218, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
-    sound_buttton = Scroll_Button(Game_Window,314, 822, 299, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue)
-    temp = Scroll_Button(Game_Window, 100, 850, 400, 8, speker_blue, sperker_darkblue, mute_blue,
-                                  mute_darkblue)
+    music_button = Scroll_Button(Game_Window,314, 822, 218, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue,
+                                 defult_value=Music_volume)
+    sound_button = Scroll_Button(Game_Window,314, 822, 299, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue,
+                                  defult_value=Sound_volume)
+    save_setting_button = Button(Game_Window, 'Media/Image/setting/Save_setting_black.png',
+                          'Media/Image/setting/Save_setting_green.png', 652, 370)
+    reset_setting_button = Button(Game_Window, 'Media/Image/setting/Reset_setting_black.png', 'Media/Image/setting/Reset_setting_green.png', 452, 370)
+    facebook_button = Button(Game_Window, 'Media/Image/Icon/facebook.png', 'Media/Image/Icon/facebook.png', 339, 510, press_effact=True, caption_text='facebook.com/brightgoal.in.Education/')
+    brightgoal_button = Button(Game_Window, 'Media/Image/Icon/brightgoal.png', 'Media/Image/Icon/brightgoal.png', 381, 510, press_effact=True, caption_text='brightgoal.in')
+    youtube_button = Button(Game_Window, 'Media/Image/Icon/youtube.png', 'Media/Image/Icon/youtube.png', 423, 510, press_effact=True, caption_text='youtube.com/brightgoal')
+    twitter_button = Button(Game_Window, 'Media/Image/Icon/twitter.png', 'Media/Image/Icon/twitter.png', 465, 510, press_effact=True, caption_text='twitter.com/brightgoal_in')
+    insta_button = Button(Game_Window, 'Media/Image/Icon/insta.png', 'Media/Image/Icon/insta.png', 507, 510,
+                            press_effact=True, caption_text='instagram.com/brightgoal.in')
+    whatsapp_button = Button(Game_Window, 'Media/Image/Icon/whatsapp.png', 'Media/Image/Icon/whatsapp.png', 549, 510,
+                            press_effact=True, caption_text='9140417112')
+    more_product = Button(Game_Window, 'Media/Image/setting/more_product_black.png', 'Media/Image/setting/more_product_green.png', 375, 570, caption_text='https://www.instamojo.com/Brightgoal')
     event_list = []
     while True:
         for event in pygame.event.get():
@@ -1649,26 +1902,78 @@ def setting():
                     return True
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    mouse_x, mouse_y = event.pos
+                    mouse_x, mouse_y = event.posmouse_x, mouse_y = event.pos
+                    if more_product.collide(mouse_x, mouse_y):
+                        open_url('https://www.instamojo.com/Brightgoal')
+                    if facebook_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Facebook Page:,https://www.facebook.com/,brightgoal.in.Education/',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.facebook.com/brightgoal.in.Education/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.facebook.com/brightgoal.in.Education/')
+                    if brightgoal_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Website Link:,https://www.brightgoal.in/',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.brightgoal.in/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.brightgoal.in/')
+                    if insta_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Instagram link:,https://www.instagram.com,/brightgoal.in/', [{'name':'Open in browser'},{'name':'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://www.instagram.com/brightgoal.in/')
+                        elif re_value == 'Open in browser':
+                            open_url('https://www.instagram.com/brightgoal.in/')
+                    if twitter_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Twitter Link:,https://twitter.com/brightgoal_in', [{'name':'Open in browser'},{'name':'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://twitter.com/brightgoal_in')
+                        elif re_value == 'Open in browser':
+                            open_url('https://twitter.com/brightgoal_in')
+                    if youtube_button.collide(mouse_x, mouse_y):
+                        re_value = msg_box('Youtube Link:,https://youtube.com/brightgoal',
+                                           [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
+                        if re_value == 'Copy to clipboard':
+                            clipboard.copy('https://youtube.com/brightgoal')
+                        elif re_value == 'Open in browser':
+                            open_url('https://youtube.com/brightgoal')
+                    if whatsapp_button.collide(mouse_x, mouse_y):
+                        if msg_box('WhatsApp Number,9140417112',[{'name':'Copy to clipboard'}]) == 'Copy to clipboard':
+                            clipboard.copy('9140417112')
+                    if save_setting_button.collide(mouse_x, mouse_y):
+                        update_setting('Setting', '_id', 12345, {'Sound volume': sound_button.value,
+                                                                 'Music volume':music_button.value})
+                        check_Setting()
+                    if reset_setting_button.collide(mouse_x, mouse_y):
+                        update_setting('Setting', '_id', 12345, {'Sound volume': 100,
+                                                                 'Music volume': 100})
+                        check_Setting()
+                        sound_button.config_value(Sound_volume)
+                        music_button.config_value(Music_volume)
                     if back_button.collide(mouse_x, mouse_y):
                         return
 
         Game_Window.blit(setting_background, [0, 0])
         LineEffact.show_effact()
         LineEffact_2.show_effact()
+        Game_Window.blit(setting_background_logo, [0, 0])
         back_button.place()
         custom_out_text(Game_Window, 'Setting', 0, 920, 90, colors_rb.white, 28, 'Media/Font/adventpro-bold.ttf')
         out_text_file(Game_Window, 'Background Music', 24, 80, 207, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
         out_text_file(Game_Window, "Sound Effact's", 24, 80, 284, colors_rb.white, 'Media/Font/adventpro-bold.ttf')
-
-        temp.place(event_list)
         music_button.place(event_list)
-        sound_buttton.place(event_list)
+        sound_button.place(event_list)
+        save_setting_button.place()
+        reset_setting_button.place()
+        whatsapp_button.place()
+        insta_button.place()
+        twitter_button.place()
+        youtube_button.place()
+        brightgoal_button.place()
+        facebook_button.place()
+        more_product.place()
         event_list = []
-        '''pygame.draw.rect(Game_Window, colors_rb.light_blue, [314, 219, 508, 8])
-        pygame.draw.rect(Game_Window, colors_rb.light_blue, [314, 299, 508, 8])
-        Game_Window.blit(mute_blue, [music_x, music_y])
-        Game_Window.blit(mute_blue, [sound_x, sound_y])'''
         pygame.display.update()
 
 main_menu()
