@@ -3,6 +3,7 @@ import sys
 import random
 import clipboard
 import pymongo
+from PIL import Image
 pygame.init()
 
 
@@ -431,12 +432,18 @@ class Ballast:
 
 
 class Button:
-    def __init__(self, surface, image, hover_img, x, y, caption_text = '', press_effact = False, button_text = None, button_text_size = 28, button_text_color = (255, 255, 255)):
+    def __init__(self, surface, image, hover_img, x, y, caption_text = '', press_effact = False, button_text = None, button_text_size = 28, button_text_color = (255, 255, 255), text_file = 'Media/Font/Kollektif.ttf'):
         self.surface = surface
         self.caption = caption_text
         self.press_effact = press_effact
-        self.image = pygame.image.load(image)
-        self.hover_img = pygame.image.load(hover_img)
+        if type(image) != str:
+            self.image = image
+        else:
+            self.image = pygame.image.load(image)
+        if type(hover_img) != str:
+            self.hover_img = hover_img
+        else:
+            self.hover_img = pygame.image.load(hover_img)
         self.button_text = button_text
         self.button_text_size = button_text_size
         self.x = x
@@ -447,7 +454,7 @@ class Button:
             img = pygame.transform.scale(self.hover_img, ((self.hover_img.get_width()-2), (self.hover_img.get_height()-2))).convert_alpha()
             self.hover_img = img
         if button_text != None and type(button_text) == str:
-            self.button_text_img = out_text_file(surface, button_text, button_text_size, 0, 0, button_text_color, 'Media/Font/Kollektif.ttf', True)
+            self.button_text_img = out_text_file(surface, button_text, button_text_size, 0, 0, button_text_color, text_file, True)
             self.button_text_x = (self.x+(self.image.get_width()/2))-(self.button_text_img.get_width()/2)
             self.button_text_y = (self.y+(self.image.get_height()/2))-(self.button_text_img.get_height()/2)
     def put(self):
@@ -533,7 +540,13 @@ visit_on_website = Button(Game_Window, 'Media/Image/menu_img/Visit_button_black.
 setting_background = pygame.image.load('Media/Image/setting/background.png')
 setting_background_logo = pygame.image.load('Media/Image/setting/background logo.png')
 Highlighter = pygame.image.load("Media/Image/Highlighter.png")
-main_background = pygame.image.load("Media/Image/main_background.png");
+main_background = pygame.image.load("Media/Image/main_background.png")
+profile_img = pygame.image.load('Media/Image/profile/Profile.png')
+
+# More Product Images
+List_menu_background = pygame.image.load('Media/Image/List_menu/background.png')
+List_menu_selector = pygame.image.load('Media/Image/List_menu/selector.png')
+hover_selector = pygame.image.load('Media/Image/List_menu/hover_selector.png')
 
 # Global variables.
 Mouse_x = 0
@@ -1285,6 +1298,187 @@ def play_game(players=0):
             custom_out_text(Game_Window, 'Your Turn', x, x1, y, colors_rb.white, 18, 'Media/Font/Kollektif.ttf')
         pygame.display.update()
 
+
+
+def profile():
+    global profile_img
+    global Line_effact, LineEffact_2
+    global Game_Window
+    global Mouse_x, Mouse_y
+    global setting_background
+    global event
+    global back_button
+
+    facebook = Button(Game_Window, 'Media/Image/Icon/facebook_white.png', 'Media/Image/Icon/facebook_white.png', 338, 642,
+                             press_effact=True, caption_text='facebook.com/brightgoal.in.Education/')
+    brightgoal = Button(Game_Window, 'Media/Image/Icon/brightgoal_white.png', 'Media/Image/Icon/brightgoal_white.png', 382,
+                        642, press_effact=True, caption_text='brightgoal.in')
+    youtube = Button(Game_Window, 'Media/Image/Icon/youtube_white.png', 'Media/Image/Icon/youtube_white.png', 426, 642,
+                            press_effact=True, caption_text='youtube.com/brightgoal')
+    twitter = Button(Game_Window, 'Media/Image/Icon/twitter_white.png', 'Media/Image/Icon/twitter_white.png', 470, 642,
+                            press_effact=True, caption_text='twitter.com/brightgoal_in')
+    instagram = Button(Game_Window, 'Media/Image/Icon/instagram_white.png', 'Media/Image/Icon/instagram_white.png', 514, 642,
+                          press_effact=True, caption_text='instagram.com/brightgoal.in')
+    whatsapp = Button(Game_Window, 'Media/Image/Icon/whatsapp_white.png', 'Media/Image/Icon/whatsapp_white.png', 558, 642,
+                             press_effact=True, caption_text='9140417112')
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    Mouse_x, Mouse_y = event.pos
+                    if back_button.collide(Mouse_x, Mouse_y):
+                        return
+                    if facebook.collide(Mouse_x, Mouse_y):
+                        open_url('https://www.facebook.com/brightgoal.in.Education/')
+                    if brightgoal.collide(Mouse_x, Mouse_y):
+                        open_url('https://www.brightgoal.in/')
+                    if instagram.collide(Mouse_x, Mouse_y):
+                        open_url('https://www.instagram.com/brightgoal.in/')
+                    if twitter.collide(Mouse_x, Mouse_y):
+                        open_url('https://twitter.com/brightgoal_in')
+                    if youtube.collide(Mouse_x, Mouse_y):
+                        open_url('https://youtube.com/brightgoal')
+                    if whatsapp.collide(Mouse_x, Mouse_y):
+                        open_url('https://wa.me/919140417112')
+
+        Game_Window.blit(setting_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
+        Game_Window.blit(profile_img, [0, 0])
+        back_button.place()
+        whatsapp.place()
+        instagram.place()
+        twitter.place()
+        youtube.place()
+        brightgoal.place()
+        facebook.place()
+        pygame.display.update()
+
+class List_menu:
+    def __init__(self, surface, x, y, bg_image, selector, hover_selector = None, buttons = [], button_distance = 5, top_padding = 5, text_size = 14, text_color = colors_rb.white, hover_text_color = colors_rb.white, text_file = 'Media/Font/Kollektif.ttf'):
+        self.background = bg_image
+        self.selector = selector
+        if hover_selector != None:
+            self.hover_selector = hover_selector
+        else:
+            self.hover_selector = self.selector
+        self.surface = surface
+        self.x = x
+        self.y = y
+        self.buttons = []
+        self.top_padding = top_padding
+        self.button_distance = button_distance
+        self.list_width = self.background.get_width()
+        self.list_height = self.background.get_height()
+        self.buttons_y = self.x+self.top_padding
+        self.buttons_x = (self.x + self.list_width/2) - (self.selector.get_width()/2)
+        self.buttons_end_y = self.buttons_y
+        start_point_y = self.buttons_y
+        step_value = self.selector.get_height()+self.button_distance
+        for button_name in buttons:
+            self.buttons_end_y = start_point_y+self.selector.get_height()
+            self.buttons.append(Button(self.surface, self.selector, self.hover_selector, self.buttons_x, start_point_y,
+                                       button_text=button_name, button_text_size=text_size, button_text_color=text_color,
+                                       text_file=text_file))
+            start_point_y += step_value
+            if start_point_y+self.top_padding >= (self.y + self.list_height):
+                break
+
+        self.list_state = False
+        if self.list_height - (self.buttons_end_y - self.y) > self.top_padding:
+            crop_Image('Media/Image/List_menu/background.png', 'Media/Image/List_menu/temp_background.png', 0, 0, self.list_width, self.buttons_end_y - self.y+self.top_padding)
+            self.background = pygame.image.load('Media/Image/List_menu/temp_background.png')
+
+    def place(self):
+        if self.list_state:
+            self.surface.blit(self.background, [self.x, self.y])
+            for button in self.buttons:
+                button.place()
+
+
+class List_menu1:
+    def __init__(self, surface, x, y, width, height, bk_color, border_color, state = False):
+        self.x = x
+        self.y = y
+        self.surface = surface
+        self.x1 = x+width
+        self.y1 = y+height
+        self.bk_color = bk_color
+        self.border_color = border_color
+        self.state = state
+        self.height = height
+        if self.state:
+            self.width = width
+        else:
+            self.width = 0
+        self.speed_value = 25
+    def place(self):
+        if self.state:
+            if self.width < self.x1-self.x:
+                self.width += self.speed_value
+            pygame.draw.rect(self.surface, self.bk_color, [self.x, self.y, self.width, self.height])
+            pygame.draw.rect(self.surface, self.border_color, [self.x, self.y, self.width, self.height], 1)
+        else:
+            if self.width > 0:
+                self.width -= self.speed_value
+            if self.width > 0:
+                pygame.draw.rect(self.surface, self.bk_color, [self.x, self.y, self.width, self.height])
+                pygame.draw.rect(self.surface, self.border_color, [self.x, self.y, self.width, self.height], 1)
+
+def crop_Image(image, output_file_name, x, y, x1, y1):
+    img = Image.open(image)
+    img = img.crop((x, y, x1, y1))
+    img.save(output_file_name)
+
+
+
+def more_products():
+    global profile_img
+    global Line_effact, LineEffact_2
+    global Game_Window
+    global Mouse_x, Mouse_y
+    global setting_background
+    global event
+    global back_button
+    global List_menu_background
+    global List_menu_selector
+    global hover_selector
+    Menu = List_menu(Game_Window, 20, 20, List_menu_background, List_menu_selector, hover_selector,
+                     ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button 5', 'Button 6', 'Button 7', 'Button 8',
+                      'Button 9', 'Button 10', 'Button 11', 'Button 12', 'Button 13', 'Button 14', 'Button 15'], text_size=14,
+                     text_file='Media/Font/Raleway-Medium.ttf')
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    Mouse_x, Mouse_y = event.pos
+                    if Menu.list_state:
+                        for button in Menu.buttons:
+                            if button.collide(Mouse_x, Mouse_y):
+                                print(button.button_text)
+                    if back_button.collide(Mouse_x,  Mouse_y):
+                        if Menu.list_state:
+                            Menu.list_state = False
+                        else:
+                            Menu.list_state = True
+        Game_Window.blit(setting_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
+        Game_Window.blit(setting_background_logo, [0, 0])
+        Menu.place()
+        back_button.place()
+        pygame.display.update()
+
+
 def choose_player():
     global setting_background
     global setting_background_logo
@@ -1422,9 +1616,9 @@ def main_menu():
                     elif option_rect == 1:
                         setting()
                     elif option_rect == 2:
-                        pass
+                        profile()
                     elif option_rect == 3:
-                        pass
+                        more_products()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
                     option_rect_color_flag = True
@@ -1438,12 +1632,12 @@ def main_menu():
                 option_rect_color_flag = False
                 if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
                     choose_player()
-                if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+                elif collide(Mouse_x, Mouse_y, options_rect_positions[1]):
                     setting()
-                if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
-                    pass
-                if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
-                    pass
+                elif collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+                    profile()
+                elif collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+                    more_products()
 
         if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
             option_rect = 0
