@@ -2,8 +2,8 @@ import pygame
 import sys
 import random
 import clipboard
-import pymongo
 from PIL import Image
+import pickle
 pygame.init()
 
 
@@ -16,6 +16,36 @@ class Colors:
     light_green = (97, 227, 31)
     light_blue = (0, 133, 255)
     light_orange = (255, 61, 0)
+
+
+def load_sound(sound_file):
+    return pygame.mixer.Sound(sound_file)
+
+
+def play_sound(sound_file,loop = 0,maxmim_time = None):
+    if maxmim_time == None:
+        pygame.mixer.Sound.play(sound_file, loop)
+    else:
+        pygame.mixer.Sound.play(sound_file, loop, maxmim_time)
+
+
+def set_volume(sound_file, volume):
+    #Max Value 1.0
+    #Min Value 0.0
+    pygame.mixer.Sound.set_volume(sound_file, volume)
+
+
+# Loading Sound Files
+
+background_music = load_sound("Media/Sound/background_sound.wav")
+button_sound = load_sound("Media/Sound/button_sound.wav")
+cut_sound = load_sound("Media/Sound/cut_sound.wav")
+stop_sound = load_sound("Media/Sound/stop_sound.wav")
+win_sound = load_sound("Media/Sound/win_sound.wav")
+game_start_sound = load_sound("Media/Sound/game_start_sound.wav")
+bet_sound = load_sound("Media/Sound/bet_sound.wav")
+jump_sound = load_sound("Media/Sound/jump_sound.wav")
+coine_sound = load_sound("Media/Sound/coine_sound.wav")
 
 
 # class for defining path and position of ballast.
@@ -391,6 +421,7 @@ class Ballast:
                 if self.collide(mouse_x, mouse_y, self.Bet_block) and self.bet_status:
                     self.bet_status = False
                     self.bet_flag = True
+                    play_sound(bet_sound)
                     self.bet_itration = self.bet_now()
 
         if self.bet_flag:
@@ -422,9 +453,9 @@ class Ballast:
             point_x = center_point_x - (image.get_width() / 2)
             point_y = center_point_y - (image.get_height() / 2)
             Game_Window.blit(image, [point_x, point_y])
-            pygame.time.Clock().tick(100)
+            #pygame.time.Clock().tick(100)
             count += 1
-            random.randint(1, 6)
+            #random.randint(1, 6)
             yield count
         return
 
@@ -432,8 +463,12 @@ class Ballast:
 
 
 class Button:
-    def __init__(self, surface, image, hover_img, x, y, caption_text = '', press_effact = False, button_text = None, button_text_size = 28, button_text_color = (255, 255, 255), text_file = 'Media/Font/Kollektif.ttf'):
+    def __init__(self, surface, image, hover_img, x, y, caption_text = '', press_effact = False, button_text = None,
+                 button_text_size = 28, button_text_color = (255, 255, 255), text_file = 'Media/Font/Kollektif.ttf',
+                 list_menu=None, command = None):
+        self.linked_list = list_menu
         self.surface = surface
+        self.command = command
         self.caption = caption_text
         self.press_effact = press_effact
         if type(image) != str:
@@ -476,10 +511,22 @@ class Button:
             else:
                 return
 
-    def place(self):
+    def place(self, events=None):
         global Mouse_x
         global Mouse_y
+        global event
         Mouse_x, Mouse_y = pygame.mouse.get_pos()
+        if type(self.linked_list) == List_menu:
+            if events != None:
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            mouse_x, mouse_y = event.pos
+                            if self.collide(mouse_x, mouse_y):
+                                if self.linked_list.list_state:
+                                    self.linked_list.list_state = False
+                                else:
+                                    self.linked_list.list_state = True
         if self.collide(Mouse_x, Mouse_y):
             if self.press_effact:
                 self.surface.blit(self.hover_img, [self.x+1, self.y+1])
@@ -557,9 +604,6 @@ Last_bet_number = 2
 Last_six_counter = 0
 LineEffact = Line_effact(Game_Window)
 LineEffact_2 = Line_effact(Game_Window, image='Media/Image/Effact/line-green.png',starting_point=875)
-Database_connection = pymongo.MongoClient('localhost',27017)
-Database = Database_connection['Ludo_Brightgoal']
-Collection = Database['Setting']
 back_button = Button(Game_Window, "Media/Image/Icon/back_blue.png", "Media/Image/Icon/back_white.png", 20, 20,
                          'Back To Menu')
 facebook_button = Button(Game_Window, 'Media/Image/Icon/facebook.png', 'Media/Image/Icon/facebook.png', 339, 510, press_effact=True, caption_text='facebook.com/brightgoal.in.Education/')
@@ -572,65 +616,92 @@ whatsapp_button = Button(Game_Window, 'Media/Image/Icon/whatsapp.png', 'Media/Im
                         press_effact=True, caption_text='9140417112')
 more_product = Button(Game_Window, 'Media/Image/setting/more_product_black.png', 'Media/Image/setting/more_product_green.png', 375, 570, caption_text='https://www.instamojo.com/Brightgoal')
 
+
+# Setting related Class
+
+class Setting:
+    def __init__(self):
+        self.Music_volume = 100
+        self.Sound_volume = 100
+        self.sound_step = 1.0/100
+
+    def check_Setting(self):
+        global Music_volume
+        global Sound_volume
+        global cut_sound, background_music, jump_sound, coine_sound, bet_sound, win_sound
+        global game_start_sound, button_sound, stop_sound
+        try:
+            fp = open("Setting.ini",'rb')
+        except FileNotFoundError:
+            self.Music_volume = 100
+            self.Sound_volume = 100
+            set_volume(background_music, 100 * self.sound_step)
+            set_volume(jump_sound, 100 * self.sound_step)
+            set_volume(stop_sound, 100 * self.sound_step)
+            set_volume(cut_sound, 100 * self.sound_step)
+            set_volume(game_start_sound, 100 * self.sound_step)
+            set_volume(bet_sound, 100 * self.sound_step)
+            set_volume(stop_sound, 100 * self.sound_step)
+            set_volume(coine_sound, 100 * self.sound_step)
+            set_volume(button_sound, 100 * self.sound_step)
+            set_volume(win_sound, 100 * self.sound_step)
+            return 404
+        try:
+            data = pickle.load(fp)
+        except:
+            self.Music_volume = 100
+            self.Sound_volume = 100
+            set_volume(background_music, 100 * self.sound_step)
+            set_volume(jump_sound, 100 * self.sound_step)
+            set_volume(stop_sound, 100 * self.sound_step)
+            set_volume(cut_sound, 100 * self.sound_step)
+            set_volume(game_start_sound, 100 * self.sound_step)
+            set_volume(bet_sound, 100 * self.sound_step)
+            set_volume(stop_sound, 100 * self.sound_step)
+            set_volume(coine_sound, 100 * self.sound_step)
+            set_volume(button_sound, 100 * self.sound_step)
+            set_volume(win_sound, 100 * self.sound_step)
+            return 405;
+
+        self.Music_volume = data.Music_volume
+        self.Sound_volume = data.Sound_volume
+        set_volume(background_music, self.Music_volume*self.sound_step)
+        set_volume(jump_sound, self.Sound_volume*self.sound_step)
+        set_volume(stop_sound, self.Sound_volume*self.sound_step)
+        set_volume(cut_sound, self.Sound_volume*self.sound_step)
+        set_volume(game_start_sound, self.Sound_volume*self.sound_step)
+        set_volume(bet_sound, self.Sound_volume*self.sound_step)
+        set_volume(stop_sound, self.Sound_volume*self.sound_step)
+        set_volume(coine_sound, self.Sound_volume*self.sound_step)
+        set_volume(button_sound, self.Sound_volume*self.sound_step)
+        set_volume(win_sound, self.Sound_volume*self.sound_step)
+        fp.close()
+        return 1
+
+    def update_setting(self):
+        try:
+            fp = open("Setting.ini",'wb')
+        except:
+            return False
+        pickle.dump(self, fp)
+        set_volume(background_music, self.Music_volume * self.sound_step)
+        set_volume(jump_sound, self.Sound_volume * self.sound_step)
+        set_volume(stop_sound, self.Sound_volume * self.sound_step)
+        set_volume(cut_sound, self.Sound_volume * self.sound_step)
+        set_volume(game_start_sound, self.Sound_volume * self.sound_step)
+        set_volume(bet_sound, self.Sound_volume * self.sound_step)
+        set_volume(stop_sound, self.Sound_volume * self.sound_step)
+        set_volume(coine_sound, self.Sound_volume * self.sound_step)
+        set_volume(button_sound, self.Sound_volume * self.sound_step)
+        set_volume(win_sound, self.Sound_volume * self.sound_step)
+        fp.close()
+        return True
+
+
 #Global Setting Variable
 
-Sound_volume = 100
-Music_volume = 100
-
-# Setting related Function.
-
-def check_Setting():
-    global Database
-    global Collection
-    global Music_volume
-    global Sound_volume
-
-    collection_list = Database.list_collection_names()
-    if 'Setting' not in collection_list:
-        print('Setting not in Data Base')
-        change_collection('Setting')
-        try:
-            Collection.insert_one({'_id':12345, 'Music volume':100, 'Sound volume':100})
-        except:
-            pass
-
-    data = Collection.find_one({'_id' : 12345})
-    Music_volume = data['Music volume']
-    Sound_volume = data['Sound volume']
-
-def update_setting(collection_name, s_key, s_value, update_data = {}):
-    global Database
-    global Collection
-    global Music_volume
-    global Sound_volume
-    if type(collection_name) == str and len(collection_name) != 0:
-        change_collection(collection_name)
-    else:
-        return False
-    if type(update_data) ==  dict and len(update_data) != 0:
-        Collection.update_many({s_key:s_value}, {'$set':update_data})
-
-# DataBase releted function.
-
-def change_collection(collection_name):
-    global Collection
-    global Database
-    if type(collection_name) == str and len(collection_name)!=0:
-        Collection = Database[collection_name]
-        return False
-    return False
-
-def chnage_Database(database_name, collection_name):
-    global Collection
-    global Database_connection
-    global Database
-    if type(database_name) == str and type(collection_name) == str and len(database_name) != 0 \
-            and len(collection_name) != 0:
-        Database = Database_connection[database_name]
-        Collection = Database[Collection]
-        return True
-    return False
-
+Global_setting = Setting()
+Global_setting.check_Setting()
 
 # temp function to define positions
 
@@ -745,7 +816,7 @@ def define_pos(image):
 
         Game_Window.blit(image, [0, 0])
         if flag and rect:
-            selecter(x, y, Mouse_x, Mouse_y, colors_rb.white)
+            selecter(x, y, Mouse_x, Mouse_y, colors_rb.light_orange)
         if flag and circle:
             drow_circule(Mouse_x, Mouse_y, 10)
         pygame.display.update()
@@ -760,8 +831,6 @@ def collide(mouse_x, mouse_y, rect):
 
 
 def close_game():
-    global Database_connection
-    Database_connection.close()
     pygame.quit()
     sys.exit()
 
@@ -808,6 +877,8 @@ def play_game(players=0):
     win = 'win'
     ballast_highlighter_color_change = 1
     cut_flag = False
+    play_sound(game_start_sound)
+    cut_sound_flag = False
     while True:
         for event in pygame.event.get():
             Mouse_x, Mouse_y = pygame.mouse.get_pos()
@@ -993,29 +1064,37 @@ def play_game(players=0):
                     if move_ballast_1:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_1 += 1
+                        play_sound(jump_sound)
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_1:
                             player[bet_turn].Movers_pos_1 = win
+                            play_sound(win_sound)
                             win_flag = True
                         pygame.time.Clock().tick(18)
                     elif move_ballast_2:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_2 += 1
+                        play_sound(jump_sound)
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_2:
                             player[bet_turn].Movers_pos_2 = win
+                            play_sound(win_sound)
                             win_flag = True
                         pygame.time.Clock().tick(18)
                     elif move_ballast_3:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_3 += 1
+                        play_sound(jump_sound)
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_3:
                             player[bet_turn].Movers_pos_3 = win
+                            play_sound(win_sound)
                             win_flag = True
                         pygame.time.Clock().tick(18)
                     elif move_ballast_4:
                         temp_last_bet_number -= 1
                         player[bet_turn].Movers_pos_4 += 1
+                        play_sound(jump_sound)
                         if len(player[bet_turn].Path) == player[bet_turn].Movers_pos_4:
                             player[bet_turn].Movers_pos_4 = win
+                            play_sound(win_sound)
                             win_flag = True
                         pygame.time.Clock().tick(18)
 
@@ -1026,24 +1105,32 @@ def play_game(players=0):
                                     break
                             else:
                                 cut_flag = True
+                            if not cut_flag:
+                                play_sound(stop_sound)
                         elif move_ballast_2 and player[bet_turn].Movers_pos_2 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
                                     break
                             else:
                                 cut_flag = True
+                            if not cut_flag:
+                                play_sound(stop_sound)
                         elif move_ballast_3 and player[bet_turn].Movers_pos_3 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
                                     break
                             else:
                                 cut_flag = True
+                            if not cut_flag:
+                                play_sound(stop_sound)
                         elif move_ballast_4 and player[bet_turn].Movers_pos_4 != win:
                             for element in player[bet_turn].stop_positions:
                                 if element == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
                                     break
                             else:
                                 cut_flag = True
+                            if not cut_flag:
+                                play_sound(stop_sound)
                         if cut_flag:
                             count = 0
                             for element in player:
@@ -1055,6 +1142,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_1 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_1 = 'home'
                                             break
                                         elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
@@ -1062,6 +1150,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_2 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_2 = 'home'
                                             break
                                         elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
@@ -1069,6 +1158,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_3 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_3 = 'home'
                                             break
                                         elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_1]:
@@ -1076,6 +1166,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_4 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_4 = 'home'
                                             break
                                     elif move_ballast_2:
@@ -1084,6 +1175,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_1 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_1 = 'home'
                                             break
                                         elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
@@ -1091,6 +1183,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_2 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_2 = 'home'
                                             break
                                         elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
@@ -1098,6 +1191,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_3 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_3 = 'home'
                                             break
                                         elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_2]:
@@ -1105,6 +1199,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_4 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_4 = 'home'
                                             break
                                     elif move_ballast_3:
@@ -1113,6 +1208,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_1 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_1 = 'home'
                                             break
                                         elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
@@ -1120,6 +1216,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_2 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_2 = 'home'
                                             break
                                         elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
@@ -1127,6 +1224,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_3 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_3 = 'home'
                                             break
                                         elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_3]:
@@ -1134,6 +1232,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_4 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_4 = 'home'
                                             break
                                     elif move_ballast_4:
@@ -1142,6 +1241,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_1 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_1 = 'home'
                                             break
                                         elif b2 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
@@ -1149,6 +1249,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_2 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_2 = 'home'
                                             break
                                         elif b3 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
@@ -1156,6 +1257,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_3 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_3 = 'home'
                                             break
                                         elif b4 == player[bet_turn].Path[player[bet_turn].Movers_pos_4]:
@@ -1163,6 +1265,7 @@ def play_game(players=0):
                                             reverse_move_ballast = element
                                             reverse_move = True
                                             move_ballast_4 = True
+                                            cut_sound_flag = True
                                             #element.Movers_pos_4 = 'home'
                                             break
                                 count += 1
@@ -1171,6 +1274,7 @@ def play_game(players=0):
                                 reverse_move = False
                                 cut_flag = False
                                 move_ballast = False
+                                cut_sound_flag = False
                                 move_ballast_1 = False
                                 move_ballast_2 = False
                                 move_ballast_3 = False
@@ -1188,6 +1292,7 @@ def play_game(players=0):
                             reverse_move_ballast = None
                             reverse_move = False
                             cut_flag = False
+                            cut_sound_flag = False
                             move_ballast = False
                             move_ballast_1 = False
                             move_ballast_2 = False
@@ -1204,6 +1309,9 @@ def play_game(players=0):
                                 player[bet_turn].bet_status = True
                 else:
                     if cut_flag:
+                        if cut_sound_flag:
+                            play_sound(cut_sound)
+                            cut_sound_flag = False
                         if move_ballast_1:
                             if reverse_move_ballast.Movers_pos_1 != 0:
                                 reverse_move_ballast.Movers_pos_1 -= 1
@@ -1228,7 +1336,7 @@ def play_game(players=0):
                             else:
                                 reverse_move_ballast.Movers_pos_4 = 'home'
                                 cut_flag = False
-                        pygame.time.Clock().tick(30)
+                        #pygame.time.Clock().tick(40)
                     else:
                         reverse_move_ballast = None
                         reverse_move = False
@@ -1326,22 +1434,32 @@ def profile():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 close_game()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     Mouse_x, Mouse_y = event.pos
                     if back_button.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         return
                     if facebook.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://www.facebook.com/brightgoal.in.Education/')
                     if brightgoal.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://www.brightgoal.in/')
                     if instagram.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://www.instagram.com/brightgoal.in/')
                     if twitter.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://twitter.com/brightgoal_in')
                     if youtube.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://youtube.com/brightgoal')
                     if whatsapp.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://wa.me/919140417112')
 
         Game_Window.blit(setting_background, [0, 0])
@@ -1358,7 +1476,9 @@ def profile():
         pygame.display.update()
 
 class List_menu:
-    def __init__(self, surface, x, y, bg_image, selector, hover_selector = None, buttons = [], button_distance = 5, top_padding = 5, text_size = 14, text_color = colors_rb.white, hover_text_color = colors_rb.white, text_file = 'Media/Font/Kollektif.ttf'):
+    def __init__(self, surface, x, y, bg_image, selector, hover_selector = None, buttons = [], button_distance = 5,
+                 top_padding = 5, text_size = 14, text_color = colors_rb.white, hover_text_color = colors_rb.white,
+                 text_file = 'Media/Font/Raleway-Medium.ttf'):
         self.background = bg_image
         self.selector = selector
         if hover_selector != None:
@@ -1369,34 +1489,46 @@ class List_menu:
         self.x = x
         self.y = y
         self.buttons = []
+        self.button_actions = buttons
         self.top_padding = top_padding
         self.button_distance = button_distance
         self.list_width = self.background.get_width()
         self.list_height = self.background.get_height()
-        self.buttons_y = self.x+self.top_padding
+        self.buttons_y = self.y+self.top_padding
         self.buttons_x = (self.x + self.list_width/2) - (self.selector.get_width()/2)
         self.buttons_end_y = self.buttons_y
         start_point_y = self.buttons_y
         step_value = self.selector.get_height()+self.button_distance
-        for button_name in buttons:
+        for button_dict in buttons:
             self.buttons_end_y = start_point_y+self.selector.get_height()
             self.buttons.append(Button(self.surface, self.selector, self.hover_selector, self.buttons_x, start_point_y,
-                                       button_text=button_name, button_text_size=text_size, button_text_color=text_color,
-                                       text_file=text_file))
+                                       button_text=button_dict['name'], button_text_size=text_size, button_text_color=text_color,
+                                       text_file=text_file, command=button_dict['command'] if 'command' in button_dict else None))
             start_point_y += step_value
             if start_point_y+self.top_padding >= (self.y + self.list_height):
                 break
 
         self.list_state = False
         if self.list_height - (self.buttons_end_y - self.y) > self.top_padding:
-            crop_Image('Media/Image/List_menu/background.png', 'Media/Image/List_menu/temp_background.png', 0, 0, self.list_width, self.buttons_end_y - self.y+self.top_padding)
-            self.background = pygame.image.load('Media/Image/List_menu/temp_background.png')
+            #crop_Image('Media/Image/List_menu/background.png', 'Media/Image/List_menu/temp_background.png', 0, 0, self.list_width, self.buttons_end_y - self.y+self.top_padding)
+            self.background = pygame.transform.scale(bg_image, (self.list_width, self.buttons_end_y - self.y+self.top_padding)).convert_alpha()
+            #self.background = pygame.image.load('Media/Image/List_menu/temp_background.png')
 
-    def place(self):
+    def place(self, events=None):
         if self.list_state:
             self.surface.blit(self.background, [self.x, self.y])
             for button in self.buttons:
                 button.place()
+            if events != None:
+                for event in events:
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.button == 1:
+                            mouse_x, mouse_y = event.pos
+                            for button in self.buttons:
+                                if button.command != None and button.collide(mouse_x, mouse_y):
+                                    play_sound(button_sound, 0)
+                                    button.command()
+
 
 
 class List_menu1:
@@ -1415,6 +1547,7 @@ class List_menu1:
         else:
             self.width = 0
         self.speed_value = 25
+
     def place(self):
         if self.state:
             if self.width < self.x1-self.x:
@@ -1446,36 +1579,102 @@ def more_products():
     global List_menu_background
     global List_menu_selector
     global hover_selector
-    Menu = List_menu(Game_Window, 20, 20, List_menu_background, List_menu_selector, hover_selector,
-                     ['Button 1', 'Button 2', 'Button 3', 'Button 4', 'Button 5', 'Button 6', 'Button 7', 'Button 8',
-                      'Button 9', 'Button 10', 'Button 11', 'Button 12', 'Button 13', 'Button 14', 'Button 15'], text_size=14,
-                     text_file='Media/Font/Raleway-Medium.ttf')
+    product_img = pygame.image.load("Media/Image/more product/product.png")
+    Menu = List_menu(Game_Window, back_button.x+44, back_button.y+34, List_menu_background, List_menu_selector, hover_selector,
+                     [{'name': 'Store', 'command': lambda a=0: open_url('https://www.instamojo.com/Brightgoal')},
+                      {'name': 'Brightgoal', 'command': lambda a=0: open_url('https://www.brightgoal.in/')},
+                      {'name': 'Twitter', 'command': lambda a=0: open_url('https://twitter.com/brightgoal_in')},
+                      {'name': 'Facebook', 'command': lambda  a=0: open_url('https://www.facebook.com/brightgoal.in.Education')},
+                      {'name': 'Instagram', 'command': lambda a=0: open_url('https://www.instagram.com/brightgoal.in/')},
+                      {'name': 'Facebook Self', 'command': lambda a=0: open_url('https://www.facebook.com/harvindar.brightgoal')},
+                      {'name': 'YouTube', 'command': lambda a=0: open_url('https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA')},
+                      {'name': 'Close game', 'command': close_game}])
+    product_meun = Button(Game_Window, 'Media/Image/Icon/menu blue.png', 'Media/Image/Icon/menu white.png', back_button.x+44, back_button.y, list_menu=Menu)
+    event_list = []
 
+    button_rect = ([504, 68, 865, 112], [503, 122, 678, 297], [691, 122, 864, 296], [503, 311, 678, 353],
+                   [691, 311, 864, 353], [503, 367, 678, 410], [691, 367, 864, 410], [503, 421, 678, 463],
+                   [691, 421, 864, 463], [503, 531, 678, 573],
+                   [691, 531, 864, 573], [503, 585, 678, 628], [690, 585, 864, 628])
+    current_rect = 0
+    temp_count = 0
     while True:
         for event in pygame.event.get():
+            event_list.append(event)
             if event.type == pygame.QUIT:
                 close_game()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     return
+                if event.key == pygame.K_DOWN:
+                    if current_rect < 12:
+                        current_rect += 1
+                    else:
+                        current_rect = 0
+                if event.key == pygame.K_UP:
+                    if current_rect > 0:
+                        current_rect -= 1
+                    else:
+                        current_rect = 12
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     Mouse_x, Mouse_y = event.pos
-                    if Menu.list_state:
-                        for button in Menu.buttons:
-                            if button.collide(Mouse_x, Mouse_y):
-                                print(button.button_text)
-                    if back_button.collide(Mouse_x,  Mouse_y):
-                        if Menu.list_state:
-                            Menu.list_state = False
-                        else:
-                            Menu.list_state = True
-        Game_Window.blit(setting_background, [0, 0])
+                    if back_button.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
+                        return
+                    if collide(Mouse_x, Mouse_y, [504, 68, 865, 682]):
+                        Menu.list_state = False
+                        temp_count = 0
+                        for rect in button_rect:
+                            if collide(Mouse_x, Mouse_y, rect):
+                                play_sound(button_sound, 0)
+                                current_rect = temp_count
+                                break
+                            temp_count += 1
+                        if temp_count == 0:
+                            open_url('https://www.instamojo.com/Brightgoal')
+                        elif temp_count == 1:
+                            open_url('https://www.instamojo.com/Brightgoal/library-management-system-with-complete-grap/')
+                        elif temp_count == 2:
+                            open_url('https://www.instamojo.com/Brightgoal/website-blocker-c-language-project-download-/')
+                        elif temp_count == 3:
+                            open_url('https://www.instamojo.com/Brightgoal/snake-game-c-language-project-source-code-ex/')
+                        elif temp_count == 4:
+                            open_url('https://www.instamojo.com/Brightgoal/contact-management-system-c-language-project/')
+                        elif temp_count == 5:
+                            open_url('https://www.instamojo.com/Brightgoal/calculator-in-c-language-complete-c-language/')
+                        elif temp_count == 6:
+                            open_url('https://www.instamojo.com/Brightgoal/music-player-in-c-language-with-source-code/')
+                        elif temp_count == 7:
+                            open_url('https://www.instamojo.com/Brightgoal/library-management-system-with-black-backgro/')
+                        elif temp_count == 8:
+                            open_url('https://www.instamojo.com/Brightgoal/library-management-system-in-c-language-comp/')
+                        elif temp_count == 12:
+                            open_url('https://twitter.com/brightgoal_in')
+                        elif temp_count == 11:
+                            open_url('https://www.instagram.com,/brightgoal.in/')
+                        elif temp_count == 10:
+                            open_url('https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA')
+                        elif temp_count == 9:
+                            open_url('https://www.facebook.com/brightgoal.in.Education/')
+
+        Game_Window.blit(main_background, [0, 0])
         LineEffact.show_effact()
         LineEffact_2.show_effact()
-        Game_Window.blit(setting_background_logo, [0, 0])
-        Menu.place()
+        Game_Window.blit(product_img, [0, 0])
+        product_meun.place(event_list)
+        Menu.place(event_list)
         back_button.place()
+        event_list = []
+        Mouse_x, Mouse_y = pygame.mouse.get_pos()
+        temp_count = 0
+        for rect in button_rect:
+            if collide(Mouse_x, Mouse_y, rect):
+                current_rect = temp_count
+                break
+            temp_count += 1
+        rect_x, rect_y, rect_x1, rect_y1 = button_rect[current_rect]
+        pygame.draw.rect(Game_Window, colors_rb.light_orange, [rect_x, rect_y, rect_x1-rect_x, rect_y1-rect_y], 3)
         pygame.display.update()
 
 
@@ -1509,6 +1708,7 @@ def choose_player():
                 if event.button == 1:
                     mouse_x, mouse_y = event.pos
                     if more_product.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://www.instamojo.com/Brightgoal')
                     if facebook_button.collide(mouse_x, mouse_y):
                         re_value = msg_box('Facebook Page:,https://www.facebook.com/,brightgoal.in.Education/',
@@ -1539,10 +1739,10 @@ def choose_player():
                         elif re_value == 'Open in browser':
                             open_url('https://twitter.com/brightgoal_in')
                     if youtube_button.collide(mouse_x, mouse_y):
-                        re_value = msg_box('Youtube Link:,https://youtube.com/brightgoal',
+                        re_value = msg_box('Youtube Link:,https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA',
                                            [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
                         if re_value == 'Copy to clipboard':
-                            clipboard.copy('https://youtube.com/brightgoal')
+                            clipboard.copy('https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA')
                         elif re_value == 'Open in browser':
                             open_url('https://youtube.com/brightgoal')
                     if whatsapp_button.collide(mouse_x, mouse_y):
@@ -1550,12 +1750,16 @@ def choose_player():
                                    [{'name': 'Copy to clipboard'}]) == 'Copy to clipboard':
                             clipboard.copy('9140417112')
                     if back_button.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         return
                     if button_2.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         last_players = 2
                     if button_3.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         last_players = 3
                     if button_4.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         last_players = 4
                     if last_players != None:
                         while True:
@@ -1612,32 +1816,45 @@ def main_menu():
                         option_rect -= 1
                 if event.key == pygame.K_RETURN:
                     if option_rect == 0:
+                        play_sound(button_sound, 0)
                         choose_player()
                     elif option_rect == 1:
+                        play_sound(button_sound, 0)
                         setting()
                     elif option_rect == 2:
+                        play_sound(button_sound, 0)
                         profile()
                     elif option_rect == 3:
+                        play_sound(button_sound, 0)
                         more_products()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
-                    option_rect_color_flag = True
-                if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
-                    option_rect_color_flag = True
-                if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
-                    option_rect_color_flag = True
-                if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
-                    option_rect_color_flag = True
+                if event.button == 1:
+                    if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
+                        option_rect_color_flag = True
+                    if collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+                        option_rect_color_flag = True
+                    if collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+                        option_rect_color_flag = True
+                    if collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+                        option_rect_color_flag = True
+                    if visit_on_website.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound)
+                        open_url("https://www.brightgoal.in")
             if event.type == pygame.MOUSEBUTTONUP:
-                option_rect_color_flag = False
-                if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
-                    choose_player()
-                elif collide(Mouse_x, Mouse_y, options_rect_positions[1]):
-                    setting()
-                elif collide(Mouse_x, Mouse_y, options_rect_positions[2]):
-                    profile()
-                elif collide(Mouse_x, Mouse_y, options_rect_positions[3]):
-                    more_products()
+                if event.button == 1:
+                    option_rect_color_flag = False
+                    if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
+                        play_sound(button_sound, 0)
+                        choose_player()
+                    elif collide(Mouse_x, Mouse_y, options_rect_positions[1]):
+                        play_sound(button_sound, 0)
+                        setting()
+                    elif collide(Mouse_x, Mouse_y, options_rect_positions[2]):
+                        play_sound(button_sound, 0)
+                        profile()
+                    elif collide(Mouse_x, Mouse_y, options_rect_positions[3]):
+                        play_sound(button_sound, 0)
+                        more_products()
 
         if collide(Mouse_x, Mouse_y, options_rect_positions[0]):
             option_rect = 0
@@ -1928,7 +2145,9 @@ def msg_box(text, button=None, text_align='center'):
                             if e.collide(Mouse_x, Mouse_y):
                                 return_text = e.Text
                                 close_msg = True
+                                play_sound(button_sound, 0)
                     if close_button.collide(Mouse_x, Mouse_y):
+                        play_sound(button_sound, 0)
                         close_msg = True
 
         Game_Window.blit(bg_image, [0, 0])
@@ -2057,22 +2276,23 @@ def setting():
     global event
     global colors_rb
     global Game_Window
-    global Music_volume
-    global Sound_volume
     global setting_background_logo
     global back_button
     global brightgoal_button
     global facebook_button, twitter_button, insta_button, whatsapp_button, youtube_button
     global more_product
-    check_Setting()
+    global Global_setting
+
+    Global_setting.check_Setting()
+
     speker_blue = ('Media/Image/Icon/speaker-blue.png')
     sperker_darkblue = ('Media/Image/Icon/speaker-darkblue.png')
     mute_blue = ('Media/Image/Icon/mute-blue.png')
     mute_darkblue = ('Media/Image/Icon/mute-darkblue.png')
     music_button = Scroll_Button(Game_Window,314, 822, 218, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue,
-                                 defult_value=Music_volume)
+                                 defult_value=Global_setting.Music_volume)
     sound_button = Scroll_Button(Game_Window,314, 822, 299, 8, speker_blue, sperker_darkblue, mute_blue, mute_darkblue,
-                                  defult_value=Sound_volume)
+                                  defult_value=Global_setting.Sound_volume)
     save_setting_button = Button(Game_Window, 'Media/Image/setting/Save_setting_black.png',
                           'Media/Image/setting/Save_setting_green.png', 652, 370)
     reset_setting_button = Button(Game_Window, 'Media/Image/setting/Reset_setting_black.png', 'Media/Image/setting/Reset_setting_green.png', 452, 370)
@@ -2090,6 +2310,7 @@ def setting():
         for event in pygame.event.get():
             event_list.append(event)
             if event.type == pygame.QUIT:
+                play_sound(button_sound, 0)
                 close_game()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
@@ -2098,6 +2319,7 @@ def setting():
                 if event.button == 1:
                     mouse_x, mouse_y = event.posmouse_x, mouse_y = event.pos
                     if more_product.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         open_url('https://www.instamojo.com/Brightgoal')
                     if facebook_button.collide(mouse_x, mouse_y):
                         re_value = msg_box('Facebook Page:,https://www.facebook.com/,brightgoal.in.Education/',
@@ -2129,23 +2351,27 @@ def setting():
                         re_value = msg_box('Youtube Link:,https://youtube.com/brightgoal',
                                            [{'name': 'Open in browser'}, {'name': 'Copy to clipboard'}])
                         if re_value == 'Copy to clipboard':
-                            clipboard.copy('https://youtube.com/brightgoal')
+                            clipboard.copy('https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA')
                         elif re_value == 'Open in browser':
-                            open_url('https://youtube.com/brightgoal')
+                            open_url('https://www.youtube.com/channel/UCCEBsUxSW7PyyCYLw8cyhvA')
                     if whatsapp_button.collide(mouse_x, mouse_y):
                         if msg_box('WhatsApp Number,9140417112',[{'name':'Copy to clipboard'}]) == 'Copy to clipboard':
                             clipboard.copy('9140417112')
                     if save_setting_button.collide(mouse_x, mouse_y):
-                        update_setting('Setting', '_id', 12345, {'Sound volume': sound_button.value,
-                                                                 'Music volume':music_button.value})
-                        check_Setting()
+                        play_sound(button_sound, 0)
+                        Global_setting.Music_volume = music_button.value
+                        Global_setting.Sound_volume = sound_button.value
+                        Global_setting.update_setting()
+
                     if reset_setting_button.collide(mouse_x, mouse_y):
-                        update_setting('Setting', '_id', 12345, {'Sound volume': 100,
-                                                                 'Music volume': 100})
-                        check_Setting()
-                        sound_button.config_value(Sound_volume)
-                        music_button.config_value(Music_volume)
+                        play_sound(button_sound, 0)
+                        Global_setting.Music_volume = 100
+                        Global_setting.Sound_volume = 100
+                        sound_button.config_value(Global_setting.Music_volume)
+                        music_button.config_value(Global_setting.Sound_volume)
+                        Global_setting.update_setting()
                     if back_button.collide(mouse_x, mouse_y):
+                        play_sound(button_sound, 0)
                         return
 
         Game_Window.blit(setting_background, [0, 0])
@@ -2170,4 +2396,64 @@ def setting():
         event_list = []
         pygame.display.update()
 
+def fadeout(surface, page, x, y):
+    pygame.image.save(surface, 'temp3.png')
+    temp_image = pygame.image.load('temp3.png')
+    temp_image = temp_image.convert()
+    temp_image2 = page.convert()
+    i = 255
+    i2 = 0
+    while i > 0:
+        temp_image.set_alpha(i)
+        temp_image2.set_alpha(i2)
+        surface.blit(temp_image2, [x, y])
+        surface.blit(temp_image, [x, y])
+        i -= 5
+        i2 += 5
+        pygame.display.update()
+
+def welcome_screen():
+    global Game_Window
+    global main_background
+    global LineEffact_2
+    global LineEffact
+    global event
+    x1 = 80
+    percentage = 0
+    step_value = (100/760)*5.0
+    harvindar_singh = pygame.image.load("Media/Image/welcome/harvindar_singh.png")
+    website_logo = pygame.image.load("Media/Image/welcome/website_logo.png")
+    while(True):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close_game()
+
+        Game_Window.blit(main_background, [0, 0])
+        LineEffact.show_effact()
+        LineEffact_2.show_effact()
+        custom_out_text(Game_Window, 'Ludo King', 0, 920, 70, colors_rb.white, 65, "Media/Font/adventpro-bold.ttf")
+        out_text_file(Game_Window, 'brightgoal.in', 22, 477, 150, colors_rb.white, "Media/Font/Gidole-Regular.otf")
+
+        custom_out_text(Game_Window, "Loading...", 80, 840, 510, colors_rb.white, 19)
+        pygame.draw.line(Game_Window, colors_rb.white, [80, 550], [840, 550], 3)
+        if int(percentage) != 99:
+            custom_out_text(Game_Window, str(int(percentage))+"%", 80, 840, 571, colors_rb.white, 19)
+            pygame.draw.line(Game_Window, colors_rb.light_green, [80, 550], [x1, 550], 3)
+
+        Game_Window.blit(harvindar_singh, [240, 244])
+        Game_Window.blit(website_logo, [490, 244])
+        if x1< 840:
+            x1 += 5
+            percentage += step_value
+        pygame.display.update()
+        if int(percentage)>= 100:
+            pygame.draw.line(Game_Window, colors_rb.light_green, [80, 550], [x1, 550], 3)
+            custom_out_text(Game_Window, str(int(percentage)) + "%", 80, 840, 571, colors_rb.white, 19)
+            pygame.display.update()
+            return
+
+play_sound(background_music, -1)
+welcome_screen()
+fadeout(Game_Window, pygame.image.load("Media/Image/welcome/menu_img.png"), 0, 0)
 main_menu()
+
